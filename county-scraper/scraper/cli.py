@@ -5,6 +5,7 @@
     python -m scraper run --no-docs                # quick digest only, no downloads
     python -m scraper extract out/scrape_X.jsonl   # agenda items for the Lead Finder
     python -m scraper validate out/scrape_X.jsonl  # check output against the contract
+    python -m scraper housing                      # county housing snapshot (Zillow Research)
     python -m scraper list                         # configured counties
 """
 from __future__ import annotations
@@ -194,6 +195,34 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_housing(args: argparse.Namespace) -> int:
+    from .housing import build_snapshot, export_snapshot, write_site_file
+    counties = select_counties(args)
+    if counties is None:
+        return 2
+    contact = args.contact or os.environ.get("COUNTY_SCRAPER_CONTACT")
+    client = Client(contact=contact)
+    snap = build_snapshot(client, counties, Path(args.cache), args.months)
+    suffix = "_" + "-".join(sorted(c["name"] for c in counties)).lower() if args.county else ""
+    paths = export_snapshot(snap, Path(args.out), date.today(), suffix)
+    if args.site:
+        if args.county:
+            print("--site needs a full run; drop --county", file=sys.stderr)
+            return 2
+        if not snap["sources"]:
+            print("nothing downloaded; the hub's housing file was left as it was", file=sys.stderr)
+            return 1
+        paths["site"] = write_site_file(snap, Path(args.site))
+    for s in snap["sources"]:
+        print(f"  {s['label']:<24} through {s['data_through']}  "
+              f"{s['counties_covered']:2d}/{len(counties)} counties")
+    for e in snap["errors"]:
+        print(f"  problem: {e}", file=sys.stderr)
+    for k, p in paths.items():
+        print(f"  {k:7} {p}")
+    return 0 if snap["sources"] else 1
+
+
 def cmd_extract(args: argparse.Namespace) -> int:
     from .extract import extract_file
     out = Path(args.out) if args.out else Path(args.input).with_name(
@@ -249,6 +278,16 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("input")
     v.add_argument("--schema", help="contract JSON Schema (default contract/scraper_contract.schema.json)")
     v.set_defaults(fn=cmd_validate)
+
+    h = sub.add_parser("housing", help="county housing snapshot from Zillow Research public data")
+    h.add_argument("--county", action="append", help="limit to a county (repeatable)")
+    h.add_argument("--months", type=int, default=24, help="months of history kept in the JSON")
+    h.add_argument("--contact", help="contact email for the user agent (or COUNTY_SCRAPER_CONTACT)")
+    h.add_argument("--cache", default=str(ROOT / "data" / "zillow"))
+    h.add_argument("--site", nargs="?", const=str(ROOT.parent / "data" / "housing.js"),
+                   help="also refresh the hub's Housing page data (default ../data/housing.js)")
+    h.add_argument("--out", default=str(ROOT / "out"))
+    h.set_defaults(fn=cmd_housing)
 
     ls = sub.add_parser("list", help="list configured counties")
     ls.set_defaults(fn=cmd_list)
