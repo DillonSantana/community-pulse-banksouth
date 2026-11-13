@@ -406,6 +406,10 @@ tbody tr:last-child td{border-bottom:0}
 .tour-spot{position:fixed;z-index:49;border-radius:12px;pointer-events:none;box-shadow:0 0 0 2px var(--gold),0 0 0 200vmax #0b2d4a8c;transition:top .5s cubic-bezier(.2,.7,.2,1),left .5s cubic-bezier(.2,.7,.2,1),width .5s cubic-bezier(.2,.7,.2,1),height .5s cubic-bezier(.2,.7,.2,1)}
 .tour-spot.full{box-shadow:0 0 0 0 transparent,0 0 0 200vmax #0b2d4ad9}
 .tour-card{position:fixed;z-index:50;width:320px;background:var(--surface);border-radius:12px;box-shadow:0 18px 50px #0b2d4a59;padding:20px 20px 16px;transition:top .5s cubic-bezier(.2,.7,.2,1),left .5s cubic-bezier(.2,.7,.2,1),opacity .2s}
+.tour-click{position:fixed;z-index:51;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;pointer-events:none;opacity:0}
+.tour-click.go{animation:tourClick .75s ease-out both}
+.tour-click::after{content:"";position:absolute;inset:14px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px #fff}
+@keyframes tourClick{0%{opacity:0;box-shadow:0 0 0 0 #c6a15bcc;transform:scale(1.5)}25%{opacity:1;transform:scale(1)}45%{transform:scale(.8);box-shadow:0 0 0 0 #c6a15bcc}100%{opacity:0;transform:scale(1);box-shadow:0 0 0 22px #c6a15b00}}
 .tour-card.swap{opacity:0}
 .tour-card.center{width:min(560px,calc(100vw - 32px));padding:36px 38px 30px}
 .tour-step{font-size:12px;color:var(--muted);margin:0 0 6px}
@@ -421,6 +425,8 @@ tbody tr:last-child td{border-bottom:0}
 .tour-x{position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:50%;background:var(--paper);color:var(--muted);font-size:18px;cursor:pointer}
 .tour-keys{font-size:12px;color:var(--muted);margin-top:10px}
 @media (max-width:860px){.nav .tour-btn{margin-top:0}}
+/* On phones the caption covers the bottom of the screen, so let the page scroll far enough to lift the target clear of it. */
+@media (max-width:760px){html.tour-on body{padding-bottom:62vh}}
 @media (max-width:760px){.tour-card:not(.center){left:12px!important;right:12px;top:auto!important;bottom:12px;width:auto}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -1179,6 +1185,16 @@ function leafletPopup(e){
   const n=e.leads.length;
   return `<h4>${esc(e.name)}</h4><p>${fmtDate(e.date,{weekday:'short',month:'short',day:'numeric'})}, ${e.time}<br>${esc(e.type)}<br>${esc(e.venue)}, ${dist(e)}<br>Relevance ${e.score} · ${n} connected ${n===1?'lead':'leads'}<br>${e.assigned?`Covered by ${esc(e.assigned)}.`:'No banker assigned.'}</p><button class="btn btn-primary btn-small" style="width:100%" onclick="lmap.closePopup();openEvent(${e.id})">View details</button>`;
 }
+/* The pin on screen for an event (its cluster, if it is grouped), and opening its popup. Works for both maps. */
+function mapPinEl(i){
+  if(leafletOn()){const m=events[i].marker;if(!m||!lmapCluster.hasLayer(m))return null;const p=lmapCluster.getVisibleParent(m);return p&&p._icon||null}
+  return $(`#mapSvg .pin[data-e="${i}"]`);
+}
+function openMapPin(i){
+  if(leafletOn()){const m=events[i].marker;if(m&&lmapCluster.hasLayer(m))lmapCluster.zoomToShowLayer(m,()=>m.openPopup());return}
+  const p=mapPinEl(i);if(p)mapPopup(i,+p.dataset.x,+p.dataset.y);
+}
+function mapPopupButton(){return leafletOn()?document.querySelector('.lf-popup .btn'):($('#mapPopup').hidden?null:$('#mapPopup .btn'))}
 function leadBand(name){const o=opps.find(x=>x.name===name);return o?band(o.score):''}
 function drawLeadLinks(e){
   lmapLinks.clearLayers();if(!$('#leadToggle').checked)return;
@@ -1196,7 +1212,7 @@ function renderLeaflet(){
       icon:L.divIcon({className:'lf-icon',html:`<div class="lpin ${band(e.score)}${need?' need':''}">${e.score}</div>`,iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-12]})});
     m.bindPopup(()=>leafletPopup(e),{className:'lf-popup',minWidth:232,maxWidth:232,autoPanPaddingTopLeft:[20,60],autoPanPaddingBottomRight:[60,20]});
     m.on('popupopen',()=>drawLeadLinks(e));
-    return m}));
+    e.marker=m;return m}));
   if($('#leadToggle').checked){
     const seen=new Set();
     visible.forEach(e=>e.leads.forEach(([name])=>{const ll=LEAD_LL[name];if(!ll||seen.has(name))return;seen.add(name);
@@ -1375,9 +1391,14 @@ const Tour=(()=>{
      body:'Each event is scored out of 100. High-value events with no banker covering them are flagged in red.'},
     {page:'events',target:'#evCalendar .month',run:()=>setView('calendar'),title:'Calendar view',
      body:'The same events on a month grid, so coverage can be planned week by week.'},
-    {page:'events',target:'#evMap',run:()=>setView('map'),title:'Map view',
+    {page:'events',target:'#evMap',run:()=>{if(view!=='map')setView('map')},title:'Map view',
      body:'Events placed by real location around the selected town, with the search radius drawn to scale. Red rings need a banker.'},
-    {page:'events',target:'#eventModal .modal-card',run:()=>{setView('list');openEvent(TOP_EVENT)},title:'A score you can explain',
+    {page:'events',target:'#evMap',run:()=>{if(view!=='map')setView('map');later(650,()=>clickOn(mapPinEl(TOP_EVENT),()=>openMapPin(TOP_EVENT)))},title:'Click any pin',
+     body:'Each pin opens a summary: when and where, how relevant it is, and whether a banker is covering it. This one is the Greene County Planning Commission.'},
+    {page:'events',target:'#eventModal .modal-card',keep:true,run:()=>{
+       if(!$('#eventModal').hidden)return;
+       if(view!=='map'||!mapPopupButton()){closeAll(true);openEvent(TOP_EVENT);return}
+       later(350,()=>clickOn(mapPopupButton(),()=>{const b=mapPopupButton();if(b)b.click();else openEvent(TOP_EVENT)}))},title:'A score you can explain',
      body:'Relevance breaks into five parts: connected leads, event type, developer attendance, distance and cost. Prep notes tell whoever attends who to look for.'},
     {page:'events',target:'#eventModal .inline-form',keep:true,run:()=>{if($('#eventModal').hidden)openEvent(TOP_EVENT);const tok=seq;setTimeout(()=>{if(active&&tok===seq)demoAssign()},900)},title:'Assign coverage',
      body:'Assigning a banker clears the “Needs a banker” flag everywhere: in the list, on the calendar and on the map.'},
@@ -1388,13 +1409,14 @@ const Tour=(()=>{
   ].filter(s=>s.page!=='housing'||HS);
   const AUTO_MS=8000,ASSIGN_STEP=steps.findIndex(s=>s.title==='Assign coverage');
   let i=0,active=false,auto=false,timer=null,raf=null,assignedByTour=false,tourLog=null,seq=0,saved=null;
-  let block,spot,card;
+  let block,spot,card,click;
 
   function build(){
     block=document.createElement('div');block.className='tour-block';
     spot=document.createElement('div');spot.className='tour-spot';
     card=document.createElement('div');card.className='tour-card';card.setAttribute('role','dialog');card.setAttribute('aria-label','Guided walkthrough');card.setAttribute('aria-live','polite');
-    document.body.append(block,spot,card);
+    click=document.createElement('div');click.className='tour-click';
+    document.body.append(block,spot,card,click);
   }
   function start(){
     if(active)return;
@@ -1402,17 +1424,27 @@ const Tour=(()=>{
     saved={f:readFilters(),sort:$('#evSort').value,view,assigned:events[TOP_EVENT].assigned};
     events[TOP_EVENT].assigned='';$('#evSort').value='score';applyFilters(DEFAULTS);setView('list');
     if(!block)build();
-    active=true;i=0;block.hidden=spot.hidden=card.hidden=false;
+    active=true;i=0;block.hidden=spot.hidden=card.hidden=false;document.documentElement.classList.add('tour-on');
     document.addEventListener('keydown',keys,true);
     show();loop();
   }
   function end(){
     active=false;stopAuto();cancelAnimationFrame(raf);
     document.removeEventListener('keydown',keys,true);
-    block.hidden=spot.hidden=card.hidden=true;
-    seq++;undoAssign();closeAll(true);
+    block.hidden=spot.hidden=card.hidden=true;document.documentElement.classList.remove('tour-on');
+    seq++;undoAssign();closeAll(true);if(lmap)lmap.closePopup();click.classList.remove('go');
     if(saved){events[TOP_EVENT].assigned=saved.assigned;$('#evSort').value=saved.sort;applyFilters(saved.f);setView(saved.view);saved=null}
     if(location.hash!=='#overview')location.hash='overview';else route();
+  }
+  /* Run fn after ms, unless the presenter has moved to another step or left. */
+  function later(ms,fn){const tok=seq;setTimeout(()=>{if(active&&tok===seq)fn()},ms)}
+  /* Show a click landing on el, then do it. */
+  function clickOn(el,then){
+    if(!el||matchMedia('(prefers-reduced-motion: reduce)').matches){then();return}
+    const r=el.getBoundingClientRect();
+    click.style.left=r.left+r.width/2+'px';click.style.top=r.top+r.height/2+'px';
+    click.classList.remove('go');void click.offsetWidth;click.classList.add('go');
+    later(420,then);
   }
   function demoAssign(){
     if(assignedByTour)return;current.event=TOP_EVENT;$('#eBanker').value='Jordan Davis';assignEvent();assignedByTour=true;tourLog=activity[0];
@@ -1429,7 +1461,7 @@ const Tour=(()=>{
     const s=steps[i],tok=++seq;
     card.classList.add('swap');
     if(i<ASSIGN_STEP)undoAssign();
-    if(!s.keep)closeAll(true);
+    if(!s.keep){closeAll(true);if(lmap)lmap.closePopup()}
     if(location.hash.slice(1)!==s.page)location.hash=s.page;
     setTimeout(()=>{
       if(!active||tok!==seq)return;
@@ -1469,6 +1501,7 @@ const Tour=(()=>{
     spot.classList.remove('full');
     const el=$(s.target);if(!el)return;
     const r=el.getBoundingClientRect(),p=8;
+    if(!r.width&&!r.height)return;   /* target not on screen yet: hold the spotlight where it is */
     const floor=vw<=760?card.getBoundingClientRect().top-10:vh-6;
     const t=Math.max(r.top-p,6),l=Math.max(r.left-p,6),b=Math.min(r.bottom+p,floor),rt=Math.min(r.right+p,vw-6);
     Object.assign(spot.style,{left:l+'px',top:t+'px',width:Math.max(0,rt-l)+'px',height:Math.max(0,b-t)+'px'});
