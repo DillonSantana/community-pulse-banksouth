@@ -17,7 +17,9 @@ AI powered search for community opportunities
 
 - **Daily data refresh.** A GitHub Action (`.github/workflows/refresh-county-data.yml`)
   re-scrapes the county websites every morning and commits fresh
-  `data/county-events.js` when meetings change. See
+  `data/county-events.js` when meetings change. Every successful run also writes the
+  time to `data/refresh-status.js`, which the hub shows bottom-left as "Public data
+  refreshed … ago". See
   [county-scraper/README.md](county-scraper/README.md#running-it-on-a-schedule).
 - **PR checks.** `.github/workflows/pr-checks.yml` runs on every pull request:
   - **Nothing dropped from main** fails if the PR removes a page, nav item, element id
