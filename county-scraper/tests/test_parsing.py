@@ -88,6 +88,10 @@ class Tagging(unittest.TestCase):
         self.assertNotIn("noise", it.tags)
         self.assertNotIn("economic_development", tag_item(_item("Variance granted")).tags)
 
+    def test_highlights_drop_bullets(self):
+        hl = highlights("• Rezoning request for 40 acres on Hwy 15 from AG to R-1.")
+        self.assertTrue(hl and hl[0].startswith("Rezoning"))
+
     def test_highlights_from_pdf_text(self):
         text = ("1. Call to order. 2. Invocation. "
                 "3. Rezoning request by Smith Holdings for 120 acres on Hwy 44 from AG to M-1. "

@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urljoin
 
-from ..dates import find_date
+from ..dates import find_date, find_time
 from ..models import Item
 from .base import Context, clean, soup
 
@@ -43,7 +43,8 @@ def fetch(ctx: Context, cfg: dict) -> list[Item]:
                     attachments=[{"kind": "packet", "url": urljoin(url, packet), "name": title}]
                     if agenda and packet else [],
                     meeting_body=title,
-                    event_date=when, source="municode",
+                    event_date=when, event_time=find_time(cells[0].get_text(" ", strip=True)),
+                    source="municode",
                 ))
             nxt = page.select_one(".pager a[href*='page='], li.pager-next a")
             # Stop paging once the listing is older than our window.

@@ -20,6 +20,7 @@ class Item:
     source: str                    # adapter name, e.g. "civicplus.agendacenter"
     event_date: Optional[date] = None   # when the meeting/event happens
     posted_date: Optional[date] = None  # when the county published it
+    event_time: str = ""           # "6:00 PM" when the source gives one
     location: str = ""
     body: str = ""                 # description / extracted text (trimmed)
     doc_url: str = ""              # direct PDF link when we have one

@@ -158,7 +158,7 @@ def _digest(ranked: list[Item], new_uids: set[str], errors: dict[str, list[str]]
     for it in keep:
         by_region[it.region][it.county].append(it)
 
-    lines = [f"# County community & development digest - {run_day:%B %-d, %Y}", "",
+    lines = [f"# County community & development digest - {run_day:%B} {run_day.day}, {run_day.year}", "",
              f"{len(keep)} items scored {min_score}+ (of {len(ranked)} collected); "
              f"{sum(1 for i in keep if i.uid in new_uids)} are new since the last run.", ""]
     for region in sorted(by_region):
