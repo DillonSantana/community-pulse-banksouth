@@ -30,6 +30,8 @@ East Georgia and BankSouth home-county websites. It produces:
 - a ranked digest of development and community-forum items
 - the `scrape_run` / `document` JSONL the Lead Finder schema expects
 - structured agenda items: request type, parcels, acreage, zoning change, and parties with roles
+- a monthly housing snapshot per county (home values, rent, inventory, list and sale
+  prices, market heat) from Zillow Research's public data files
 
 See [county-scraper/README.md](county-scraper/README.md). Everything it collects is
 public county records; scraped data and downloaded files stay out of git.
