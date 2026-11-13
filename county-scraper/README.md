@@ -39,6 +39,7 @@ extracted text. Originals are stored in `data/files/<sha256>.<ext>`.
 .venv/bin/python -m scraper run --county Greene --county Morgan
 .venv/bin/python -m scraper validate out/scrape_<stamp>.jsonl     # check against the contract
 .venv/bin/python -m scraper extract  out/scrape_<stamp>.jsonl     # agenda items
+.venv/bin/python -m scraper housing                               # county housing snapshot
 .venv/bin/python -m scraper run --days-back 14 --days-ahead 60 --min-score 5
 .venv/bin/python -m unittest discover -s tests                    # offline tests
 ```
@@ -146,6 +147,52 @@ extraction doesn't create duplicates. Known limits:
   aren't attributed yet.
 - People's names are captured only from role phrases ("X, on behalf of Y",
   "Applicant: X").
+
+## Housing snapshot (`housing`)
+
+```bash
+.venv/bin/python -m scraper housing                   # all 30 counties
+.venv/bin/python -m scraper housing --county Greene --county Putnam
+.venv/bin/python -m scraper housing --site            # also refresh the hub's Housing market page
+```
+
+Writes `out/housing_YYYY-MM-DD.md` (a one-page table per region for bankers), `.csv`
+(one row per county, Excel-friendly) and `.json` (the same plus 24 months of history
+per series). With `--site` it also writes `../data/housing.js`, the file the hub's
+Housing market page loads; commit that file to publish the new month.
+
+The data comes from the county files Zillow Research publishes for download at
+[zillow.com/research/data](https://www.zillow.com/research/data/), matched to our
+counties by FIPS code:
+
+| Series | Counties covered (Nov 2026) |
+|---|---|
+| Typical home value (ZHVI), homes for sale, market heat index | all 30 |
+| Median list price, new listings | 25 |
+| Median sale price | 11 |
+| Typical rent (ZORI) | 10 |
+| Median days to pending | 7 |
+
+Things to know before quoting a number to a client:
+
+- **It is monthly, not live.** Zillow refreshes the files around the middle of each
+  month with the month before. Every figure carries the month it describes
+  (`as_of`). Running the command more often than weekly gains nothing; an unchanged
+  file is not downloaded again (ETag check, cached in `data/zillow/`).
+- **It is county-level.** Home values are model estimates for a whole county, not an
+  appraisal and not a value for any address.
+- **Small counties have gaps.** Zillow leaves a series blank where there are too few
+  listings. The brief shows a dash.
+- **Attribute it.** Zillow asks that its research data be credited; every output
+  carries the source line. Check Zillow's current terms for the data before putting
+  figures in client-facing material.
+
+This command deliberately does **not** crawl zillow.com listing or property pages.
+Zillow's terms of use prohibit automated access to them and the site blocks
+non-browser clients, so doing it would mean the browser spoofing this project rules
+out below. For live, address-level listings or valuations, use a licensed feed
+(Zillow's Bridge API, the local MLS, or a property-data vendor such as ATTOM or
+CoreLogic) and add it here as another source.
 
 ## Politeness
 
