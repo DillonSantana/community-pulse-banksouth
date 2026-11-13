@@ -55,8 +55,13 @@ def fetch(ctx: Context, cfg: dict) -> list[Item]:
             elif not ctx.in_window(when):
                 continue
             is_doc = bool(re.search(DOC_LINK, url, re.I))
+            # The link's own words ("Agenda" vs "Minutes") beat the row context, which
+            # often mentions both.
+            kind = cfg.get("kind") or kind_from_title(f"{text} {fname}")
+            if kind == "document":
+                kind = kind_from_title(label)
             out.append(ctx.item(
-                kind=cfg.get("kind") or kind_from_title(f"{label} {fname}"),
+                kind=kind,
                 title=label, url=url, doc_url=url if is_doc else "",
                 event_date=when, source="html_docs",
             ))

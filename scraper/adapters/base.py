@@ -24,6 +24,7 @@ class Context:
     start: date          # earliest date we care about
     end: date            # latest date we care about
     errors: list[str] = field(default_factory=list)
+    parts_ok: int = 0      # sub-scrapers that completed (drives succeeded/partial/failed)
 
     def run_parts(self, prefix: str, parts: list[tuple[str, Callable[[], list[Item]]]]) -> list[Item]:
         """Run each sub-scraper; record failures instead of aborting the county."""
@@ -31,6 +32,7 @@ class Context:
         for name, fn in parts:
             try:
                 items += fn()
+                self.parts_ok += 1
             except Exception as e:
                 msg = f"{prefix}.{name}: {type(e).__name__}: {e}"
                 logging.getLogger(__name__).warning("%s %s", self.county, msg)

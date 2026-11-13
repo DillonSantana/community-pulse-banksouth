@@ -23,6 +23,9 @@ class Item:
     location: str = ""
     body: str = ""                 # description / extracted text (trimmed)
     doc_url: str = ""              # direct PDF link when we have one
+    meeting_body: str = ""         # board name exactly as posted, when the source says
+    # Other files for the same meeting (packet, minutes...): [{"kind", "url", "name"}]
+    attachments: list[dict] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
     highlights: list[str] = field(default_factory=list)
     score: int = 0
@@ -43,4 +46,5 @@ class Item:
         d["posted_date"] = self.posted_date.isoformat() if self.posted_date else ""
         d["tags"] = ",".join(self.tags)
         d["highlights"] = " || ".join(self.highlights)
+        d.pop("attachments", None)
         return d

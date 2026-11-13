@@ -41,7 +41,14 @@ def fetch(ctx: Context, cfg: dict) -> list[Item]:
             when = parse_iso(ev.get("startDateTime"))
             if not ctx.in_window(when):
                 continue
-            kind, f = _pick_file(ev.get("publishedFiles") or [])
+            files = ev.get("publishedFiles") or []
+            kind, f = _pick_file(files)
+            attachments = [
+                {"kind": _pick_file([o])[0], "url": FILE.format(t=t, fid=o["fileId"]),
+                 "name": o.get("name", "")}
+                for o in files if o is not f and o.get("fileId")
+            ]
+            category = (ev.get("categoryName") or "").strip()
             loc = ev.get("eventLocation") or {}
             location = ", ".join(x for x in (loc.get("address1"), loc.get("address2"),
                                              loc.get("city")) if x)
@@ -53,7 +60,11 @@ def fetch(ctx: Context, cfg: dict) -> list[Item]:
                 event_date=when,
                 posted_date=parse_iso(ev.get("createdOn")),
                 location=location,
-                body=clean(f"{ev.get('categoryName') or ''}. {ev.get('eventDescription') or ''}"),
+                # "General" is CivicClerk's catch-all; the event name is more telling then.
+                meeting_body=category if category and category.lower() != "general"
+                else clean(ev.get("eventName"), 200),
+                attachments=attachments,
+                body=clean(f"{category}. {ev.get('eventDescription') or ''}"),
                 source="civicclerk",
             ))
         return out

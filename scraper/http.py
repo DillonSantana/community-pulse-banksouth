@@ -12,7 +12,14 @@ import urllib3
 
 log = logging.getLogger(__name__)
 
-USER_AGENT = "Mozilla/5.0 (compatible; CountyMeetingMonitor/0.1; public meeting records reader)"
+USER_AGENT = "Mozilla/5.0 (compatible; CountyMeetingMonitor/0.2; public meeting records reader)"
+
+
+def user_agent(contact: str | None) -> str:
+    """The handoff contract asks for a contact email in the UA so county IT can reach us."""
+    if not contact:
+        return USER_AGENT
+    return USER_AGENT[:-1] + f"; contact {contact})"
 MIN_HOST_INTERVAL = 1.0   # seconds between requests to the same host
 TIMEOUT = 30
 
@@ -22,10 +29,12 @@ class FetchError(Exception):
 
 
 class Client:
-    def __init__(self, respect_robots: bool = True, min_interval: float = MIN_HOST_INTERVAL):
+    def __init__(self, respect_robots: bool = True, min_interval: float = MIN_HOST_INTERVAL,
+                 contact: str | None = None):
+        self.ua = user_agent(contact)
         self.session = requests.Session()
         self.session.headers.update({
-            "User-Agent": USER_AGENT,
+            "User-Agent": self.ua,
             "Accept": "text/html,application/xhtml+xml,application/json,application/xml;q=0.9,*/*;q=0.8",
         })
         self.respect_robots = respect_robots
@@ -48,7 +57,7 @@ class Client:
         delay = None
         if rp is not None:
             try:
-                delay = rp.crawl_delay(USER_AGENT)
+                delay = rp.crawl_delay(self.ua)
             except Exception:
                 delay = None
         return max(self.min_interval, min(float(delay or 0), 30.0))
@@ -77,7 +86,7 @@ class Client:
             except Exception:
                 self._robots[root] = None
         rp = self._robots[root]
-        return True if rp is None else rp.can_fetch(USER_AGENT, url)
+        return True if rp is None else rp.can_fetch(self.ua, url)
 
     def _raw_get(self, url: str, host: str, **kw) -> requests.Response:
         verify = host not in self._insecure_hosts

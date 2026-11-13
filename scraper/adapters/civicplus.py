@@ -42,7 +42,7 @@ def agenda_center(ctx: Context, base: str) -> list[Item]:
         items[url] = ctx.item(
             kind=kind,
             title=f"{title} ({category})" if category and category not in title else title,
-            url=url, doc_url=url, event_date=when,
+            url=url, doc_url=url, event_date=when, meeting_body=category,
             source="civicplus.agendacenter",
         )
     return list(items.values())

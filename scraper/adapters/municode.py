@@ -40,6 +40,9 @@ def fetch(ctx: Context, cfg: dict) -> list[Item]:
                     title=title,
                     url=urljoin(url, detail) if detail else urljoin(url, agenda or packet or url),
                     doc_url=urljoin(url, agenda or packet) if (agenda or packet) else "",
+                    attachments=[{"kind": "packet", "url": urljoin(url, packet), "name": title}]
+                    if agenda and packet else [],
+                    meeting_body=title,
                     event_date=when, source="municode",
                 ))
             nxt = page.select_one(".pager a[href*='page='], li.pager-next a")
