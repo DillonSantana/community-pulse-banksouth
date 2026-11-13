@@ -12,6 +12,23 @@ AI powered search for community opportunities
 - **Where to Be** — events where future clients and project decision-makers are likely to gather, with filters, a relevance score and its breakdown, connected leads, banker coverage, and list / calendar / map views. The calendar has a **Month** grid and an at-a-glance **List**, a compact day-by-day table showing time, meeting, county, agenda highlights and relevance. Real upcoming county meetings from `county-scraper` (`data/county-events.js`) appear alongside the sample events, tagged **County posting**.
 - **Campaign briefs** — a guided outreach brief that separates verified facts from hypotheses.
 
+## Automation
+
+- **Daily data refresh.** A GitHub Action (`.github/workflows/refresh-county-data.yml`)
+  re-scrapes the county websites every morning and commits fresh
+  `data/county-events.js` when meetings change. See
+  [county-scraper/README.md](county-scraper/README.md#running-it-on-a-schedule).
+- **PR checks.** `.github/workflows/pr-checks.yml` runs on every pull request:
+  - **Nothing dropped from main** fails if the PR removes a page, nav item, element id
+    or function that exists on `main`. This is the usual sign that a merge conflict
+    was resolved by keeping only one side.
+  - The county scraper tests run when the PR touches `county-scraper/`.
+
+**Resolving conflicts in `index.html`:** most conflicts here are two PRs adding
+different things at the same spot. Keep **both** sides. Where both sides edited the
+same line (for example the startup call at the bottom), combine the edits by hand.
+Then open the page and check every nav item still works.
+
 ## Run it locally
 
 It's a single self-contained HTML file with no build step or dependencies. Either open `index.html` in a browser, or serve it:

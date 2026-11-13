@@ -201,8 +201,24 @@ Facebook, X and Eventbrite are intentionally out of scope.
 
 ## Running it on a schedule
 
-Daily is enough (the handoff notes that P&Z agendas post about a week ahead). With
-cron (`crontab -e`):
+**It runs daily on GitHub.** `.github/workflows/refresh-county-data.yml` runs every
+morning at 10:15 UTC (6:15 AM Eastern in summer). Each run:
+
+1. Runs the tests, then scrapes every county.
+2. Commits `data/county-events.js` to `main` if the meetings changed. A run where only
+   the timestamp changed makes no commit.
+3. Attaches the Lead Finder handoff JSONL, the digest and the CSV to the run as a
+   downloadable artifact, kept for 30 days.
+
+The scraper's memory (`data/items.db`: seen items, document hashes, ETags) is carried
+between runs in the Actions cache, so "new" means new and unchanged files aren't
+downloaded again. To trigger a run by hand, use **Actions → Refresh county data → Run
+workflow**.
+
+Setup: a repo admin adds a repository secret `COUNTY_SCRAPER_CONTACT` with the contact
+email for the user agent. The job runs without it, with a warning.
+
+To run it on your own machine instead, use cron (`crontab -e`):
 
 ```
 0 6 * * * cd /path/to/community-pulse-banksouth/county-scraper && COUNTY_SCRAPER_CONTACT=you@example.com .venv/bin/python -m scraper run >> data/cron.log 2>&1

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import replace
 from datetime import date, datetime
 from pathlib import Path
 
@@ -97,13 +98,18 @@ def _clean_title(it: Item, county: str) -> str:
     t = re.sub(r"\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b|\b20\d{6}\b", " ", it.title)   # dates, 20261117
     t = re.sub(r"\s*\((?:[^()]*)\)\s*$", "", t)                                  # "(Board of ...)" suffix
     t = " ".join(t.split()).strip(" -–")
+    if " " not in t and "-" in t:                                                  # "Work-Session-Agenda"
+        t = re.sub(r"[-_]+", " ", t)
+        t = re.sub(r"\s+agenda$", "", t, flags=re.I)
     t = re.sub(r"^(Meeting Agenda|Agenda)\s*[-–]\s*", "", t, flags=re.I)
     t = re.sub(r"(\b[\w ]{4,30}\b)\s+\1", r"\1", t)                               # "Agenda Agenda"
     if re.fullmatch(r"(?i)(meeting )?agenda( meeting)?|meeting", t):
         t = it.meeting_body or "Public Meeting"
     elif it.meeting_body and len(t) < 12:
         t = it.meeting_body
-    if county.lower() not in t.lower() and it.county.split("-")[0].lower() not in t.lower():
+    # City meetings (joint city-county sites like Hawkinsville-Pulaski) keep their own name.
+    is_city = re.search(r"\bcity of\b", t, re.I)
+    if not is_city and county.lower() not in t.lower() and it.county.split("-")[0].lower() not in t.lower():
         t = f"{county} County {t}"
     return t[:140]
 
@@ -148,12 +154,16 @@ def build_events(items: list[Item], counties: dict[str, str], today: date) -> li
         if not is_hub_event(it, today):
             continue
         canon = counties.get(it.county, it.county)
-        key = (canon, it.event_date, _core(it.title) or _core(it.meeting_body))
+        # A title that cleans down to nothing can't prove two meetings are the same;
+        # fall back to the source URL so they stay separate.
+        core = _core(it.title) or _core(it.meeting_body) or f"url:{it.doc_url or it.url}"
+        key = (canon, it.event_date, core)
         cur = merged.get(key)
         if cur is None:
-            merged[key] = it
+            merged[key] = replace(it, tags=list(it.tags), highlights=list(it.highlights))
             continue
         # Same meeting from two feeds: keep the richer one, borrow what it lacks.
+        it = replace(it, tags=list(it.tags), highlights=list(it.highlights))   # never edit the caller's items
         best, other = (it, cur) if (it.doc_url and not cur.doc_url) or it.score > cur.score else (cur, it)
         best.event_time = best.event_time or other.event_time
         best.location = best.location or other.location
@@ -164,7 +174,7 @@ def build_events(items: list[Item], counties: dict[str, str], today: date) -> li
         merged[key] = best
 
     out = []
-    updated = today.strftime("%-d %b")
+    updated = f"{today.day} {today:%b}"          # "13 Nov" (strftime %-d fails on Windows)
     for (canon, when, _), it in sorted(merged.items(), key=lambda kv: (kv[0][1], kv[0][0])):
         town, lat, lng = SEATS.get(canon, (canon, 33.0, -83.0))
         etype = _event_type(f"{it.title} {it.meeting_body}")

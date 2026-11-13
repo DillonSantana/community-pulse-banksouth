@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import Optional
 
@@ -64,11 +64,57 @@ def find_date(*texts: str) -> Optional[date]:
     return None
 
 
+try:
+    from zoneinfo import ZoneInfo
+    EASTERN = ZoneInfo("America/New_York")
+except Exception:                       # no tz database (e.g. Windows without tzdata)
+    EASTERN = timezone(timedelta(hours=-5), "EST")
+
+# 2026-11-17T17:00:00Z, 2026-11-17T17:00:00+00:00, 20261117T230000Z (iCal)
+_ISO_DT = re.compile(r"(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2})(?::?(\d{2}))?(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?")
+_OFFSET_END = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
+
+
+def strip_offset(value: str | None) -> str:
+    """Drop a trailing 'Z' / '+00:00' so the timestamp is read as local wall time.
+
+    Only for sources known to mislabel local times as UTC (CivicClerk sends a
+    5 PM meeting as T17:00:00Z). Everywhere else an offset is real.
+    """
+    return _OFFSET_END.sub("", (value or "").strip())
+
+
+def _iso_datetime(text: str) -> Optional[datetime]:
+    """Parse the first ISO/iCal timestamp. Offset-aware values become Eastern time;
+    values without an offset are taken as the county's local wall time."""
+    m = _ISO_DT.search(text or "")
+    if not m:
+        return None
+    y, mo, d, h, mi, s, off = m.groups()
+    try:
+        dt = datetime(int(y), int(mo), int(d), int(h), int(mi), int(s or 0))
+    except ValueError:
+        return None
+    if off:
+        if off == "Z":
+            tz = timezone.utc
+        else:
+            sign = 1 if off[0] == "+" else -1
+            hh, mm = int(off[1:3]), int(off[-2:])
+            tz = timezone(sign * timedelta(hours=hh, minutes=mm))
+        dt = dt.replace(tzinfo=tz).astimezone(EASTERN).replace(tzinfo=None)
+    return dt
+
+
 def parse_iso(value: str | None) -> Optional[date]:
+    """Calendar date of an ISO timestamp, in Eastern time when it carries an offset."""
     if not value:
         return None
+    dt = _iso_datetime(value)
+    if dt:
+        return dt.date()
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+        return datetime.fromisoformat(value).date()
     except ValueError:
         return find_date(value)
 
@@ -83,7 +129,6 @@ def parse_rfc822(value: str | None) -> Optional[date]:
 
 
 _TIME_12 = re.compile(r"\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*([ap])\.?\s*m\.?(?![a-z])", re.I)
-_TIME_ISO = re.compile(r"T([01]\d|2[0-3]):?([0-5]\d)")
 
 
 def _fmt(h: int, m: int) -> str:
@@ -93,9 +138,11 @@ def _fmt(h: int, m: int) -> str:
 def find_time(*texts: str) -> str:
     """First clock time in the strings, as '6:00 PM'; '' if none.
 
-    ISO timestamps are read as the county's wall-clock time: CivicClerk labels local
-    meeting times with 'Z' (a 5 PM meeting comes through as T17:00:00Z).
-    Midnight ('T00:00') usually means "no time given", so it is ignored.
+    ISO/iCal timestamps with an offset ('Z', '+00:00') are converted to Eastern
+    time; ones without an offset are the county's local wall time. Eastern
+    midnight usually means "no time given" (a date-only event exported as
+    T05:00:00Z), so it is returned as ''. Sources that mislabel local time as UTC
+    (CivicClerk) must call strip_offset() first.
     """
     for text in texts:
         if not text:
@@ -104,7 +151,7 @@ def find_time(*texts: str) -> str:
         if m:
             h = int(m.group(1)) % 12 + (12 if m.group(3).lower() == "p" else 0)
             return _fmt(h, int(m.group(2) or 0))
-        m = _TIME_ISO.search(text)
-        if m and (m.group(1), m.group(2)) != ("00", "00"):
-            return _fmt(int(m.group(1)), int(m.group(2)))
+        dt = _iso_datetime(text)
+        if dt and (dt.hour, dt.minute) != (0, 0):
+            return _fmt(dt.hour, dt.minute)
     return ""

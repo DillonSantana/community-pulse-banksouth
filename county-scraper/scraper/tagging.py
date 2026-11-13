@@ -91,7 +91,7 @@ def highlights(text: str, limit: int = 6) -> list[str]:
               for p in _COMPILED[tag][1]]
     out: list[str] = []
     for chunk in _SENT_SPLIT.split(text):
-        chunk = " ".join(chunk.split())
+        chunk = " ".join(chunk.split()).lstrip("•·▪◦●*–- ")          # drop list bullets
         if 15 <= len(chunk) <= 400 and any(p.search(chunk) for p in strong):
             if chunk not in out:
                 out.append(chunk)

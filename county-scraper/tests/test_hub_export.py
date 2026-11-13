@@ -23,9 +23,26 @@ class Times(unittest.TestCase):
     def test_formats(self):
         self.assertEqual(find_time("05:00 PM - 11:59 PM"), "5:00 PM")
         self.assertEqual(find_time("11/24/2026 - 1:20pm"), "1:20 PM")
-        self.assertEqual(find_time("2026-11-17T17:00:00Z"), "5:00 PM")   # CivicClerk wall time
-        self.assertEqual(find_time("20261117T180000"), "6:00 PM")         # iCal
-        self.assertEqual(find_time("2026-11-17T00:00:00Z"), "")           # no time given
+        # Real offsets are converted to Eastern; Eastern midnight means "no time given".
+        self.assertEqual(find_time("2026-11-17T23:00:00Z"), "6:00 PM")
+        self.assertEqual(find_time("2026-12-14T05:00:00+00:00"), "")      # Pulaski, date-only
+        self.assertEqual(find_time("2026-07-14T22:30:00+00:00"), "6:30 PM")  # summer, EDT
+        self.assertEqual(find_time("2026-11-17T18:00:00-05:00"), "6:00 PM")
+        self.assertEqual(find_time("20261117T180000"), "6:00 PM")         # iCal, local
+        self.assertEqual(find_time("20261117T230000Z"), "6:00 PM")        # iCal, UTC
+        self.assertEqual(find_time("2026-11-17T00:00:00"), "")            # no time given
+
+    def test_civicclerk_wall_time(self):
+        # CivicClerk sends local times labeled Z; the adapter strips the offset first.
+        from scraper.dates import parse_iso, strip_offset
+        self.assertEqual(find_time(strip_offset("2026-11-17T17:00:00Z")), "5:00 PM")
+        self.assertEqual(parse_iso(strip_offset("2026-11-17T00:00:00Z")), date(2026, 11, 17))
+
+    def test_offset_dates_use_eastern(self):
+        from scraper.dates import parse_iso
+        # 8 PM Eastern on the 17th is 01:00 UTC on the 18th.
+        self.assertEqual(parse_iso("2026-11-18T01:00:00Z"), date(2026, 11, 17))
+        self.assertEqual(parse_iso("2026-11-17"), date(2026, 11, 17))
         self.assertEqual(find_time("Agenda 2026"), "")
 
 
@@ -77,6 +94,30 @@ class Export(unittest.TestCase):
         self.assertEqual([e["type"] for e in evs], ["Community forum", "Project milestone"])
         self.assertTrue(all(e["county"] == "Bibb" and e["town"] == "Macon" for e in evs))
         self.assertEqual(evs[0]["time"], "Time TBD")
+
+    def test_titles(self):
+        from scraper.hub_export import _clean_title
+        it = lambda title, county="Wilkinson": _it(title, date(2026, 11, 19), county=county)
+        self.assertEqual(_clean_title(it("Work-Session-Agenda"), "Wilkinson"), "Wilkinson County Work Session")
+        self.assertEqual(_clean_title(it("City of Hawkinsville Commission Meeting", "Pulaski"), "Pulaski"),
+                         "City of Hawkinsville Commission Meeting")
+
+    def test_does_not_mutate_input_items(self):
+        d = date(2026, 11, 17)
+        a = _it("Board of Commissioners Meeting", d, kind="event", event_time="5:00 PM")
+        b = _it("Board of Commissioners Meeting", d, doc_url="https://x/a.pdf", tags=["development"], score=6)
+        build_events([a, b], {"Morgan": "Morgan"}, TODAY)
+        self.assertEqual((b.event_time, a.doc_url, a.tags), ("", "", []))
+
+    def test_untitled_meetings_stay_separate(self):
+        d = date(2026, 11, 17)
+        evs = build_events([_it("Meeting Agenda", d, url="https://x/1.pdf"),
+                            _it("Meeting", d, url="https://x/2.pdf")], {"Morgan": "Morgan"}, TODAY)
+        self.assertEqual(len(evs), 2)
+
+    def test_updated_label_is_portable(self):
+        (ev,) = build_events([_it("Planning Commission", date(2026, 11, 19))], {"Morgan": "Morgan"}, date(2026, 11, 3))
+        self.assertEqual(ev["updated"], "3 Nov")
 
     def test_write_js(self):
         evs = build_events([_it("Planning Commission", date(2026, 11, 19))], {"Morgan": "Morgan"}, TODAY)

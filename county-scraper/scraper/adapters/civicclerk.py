@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from ..dates import find_time, parse_iso
+from ..dates import find_time, parse_iso, strip_offset
 from ..models import Item
 from .base import Context, clean
 
@@ -38,7 +38,9 @@ def fetch(ctx: Context, cfg: dict) -> list[Item]:
         data = ctx.client.json(API.format(t=t) + "/Events", params=params)
         out = []
         for ev in data.get("value", []):
-            when = parse_iso(ev.get("startDateTime"))
+            # CivicClerk labels local meeting times as UTC ("T17:00:00Z" is 5 PM local).
+            start = strip_offset(ev.get("startDateTime"))
+            when = parse_iso(start)
             if not ctx.in_window(when):
                 continue
             files = ev.get("publishedFiles") or []
@@ -58,7 +60,7 @@ def fetch(ctx: Context, cfg: dict) -> list[Item]:
                 url=PORTAL.format(t=t, id=ev["id"]),
                 doc_url=FILE.format(t=t, fid=f["fileId"]) if f and f.get("fileId") else "",
                 event_date=when,
-                event_time=find_time(ev.get("startDateTime") or ""),
+                event_time=find_time(start),
                 posted_date=parse_iso(ev.get("createdOn")),
                 location=location,
                 # "General" is CivicClerk's catch-all; the event name is more telling then.
