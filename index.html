@@ -6,6 +6,8 @@
 <title>BankSouth Opportunity Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css" crossorigin="anonymous">
 <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -206,7 +208,7 @@ tbody tr:last-child td{border-bottom:0}
 
 /* Map */
 .map{position:relative;background:#e8f0f3;border:1px solid var(--line);border-radius:10px;overflow:hidden;height:540px}
-.map svg{display:block;width:100%;height:100%}
+.map #mapSvg{display:block;width:100%;height:100%}
 .map-legend{position:absolute;left:14px;top:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;display:flex;flex-direction:column;gap:5px}
 .map-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:-1px}
 .map-zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:6px;overflow:hidden}
@@ -313,6 +315,52 @@ tbody tr:last-child td{border-bottom:0}
   .stack-key{grid-template-columns:repeat(3,minmax(0,1fr))}
   .sheet-head,.sheet-body{padding-left:18px;padding-right:18px}
 }
+@media (max-width:600px){
+  .rail{flex-wrap:wrap;overflow:visible;row-gap:6px}
+  .nav{width:100%;flex-wrap:wrap;gap:4px}
+  .nav a,.nav button{width:auto;padding:7px 10px;font-size:13px}
+}
+#mapSvg text.label{paint-order:stroke;stroke:#eef4f6;stroke-width:4px;stroke-linejoin:round}
+
+/* Real map (Leaflet). Falls back to the drawn SVG map when offline. */
+.drawer:not(.open){box-shadow:none}
+.map{isolation:isolate}
+#leafletMap{position:absolute;inset:0;z-index:0;background:#dfe8ec}
+.map:not(.is-leaflet) #leafletMap,.map:not(.is-leaflet) .lf-only{display:none}
+.map.is-leaflet #mapSvg{display:none}
+.map>.map-legend,.map>.map-zoom,.map>.map-empty,.map>.map-basemaps,.map>.map-hint{z-index:3}
+.map>.map-loading{z-index:4}
+.map .leaflet-container{font:inherit;background:#dfe8ec}
+.map .leaflet-control-attribution{font-size:10px;max-width:calc(100% - 70px);white-space:normal}
+.map .leaflet-control-scale-line{font-size:11px;border-color:var(--navy);color:var(--navy);background:#ffffffd9}
+.lf-icon{background:none;border:0}
+.lpin{width:26px;height:26px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;font:700 10px var(--sans);color:#fff;border:2.5px solid #fff;box-shadow:0 1px 5px #00000080}
+.lpin.high{background:var(--teal)}.lpin.medium{background:var(--gold)}.lpin.low{background:#8fa3b1}
+.lpin.need{box-shadow:0 0 0 3px var(--red),0 1px 6px #00000080}
+.lcluster{width:36px;height:36px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;border:3px solid #fff;box-shadow:0 1px 6px #00000080;font:700 13px var(--sans)}
+.lcluster.need{box-shadow:0 0 0 3px var(--red),0 1px 6px #00000080}
+.lcenter{position:relative;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:var(--navy);border:3px solid #fff;box-shadow:0 1px 6px #00000080}
+.lcenter span{position:absolute;top:19px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:var(--navy);font:700 12px var(--sans);padding:2px 7px;border-radius:4px;box-shadow:0 2px 8px #0b2d4a33}
+.llead{width:13px;height:13px;box-sizing:border-box;border:2px solid #fff;box-shadow:0 1px 4px #00000080;background:#8a9aa5}
+.llead.high{background:var(--teal)}.llead.medium{background:var(--gold)}.llead.low{background:#8fa3b1}
+.lf-popup .leaflet-popup-content-wrapper{border-radius:8px;box-shadow:0 8px 24px #0b2d4a40;padding:0}
+.lf-popup .leaflet-popup-content{margin:14px;font-size:13px;line-height:1.45}
+.lf-popup h4{margin:0 22px 4px 0;font:600 14px var(--sans);color:var(--navy)}
+.lf-popup p{margin:0 0 10px;color:var(--muted)}
+.map-basemaps{position:absolute;top:14px;right:14px;box-shadow:0 2px 8px #0b2d4a26}
+.map-basemaps button{padding:6px 11px;font-size:12px}
+.map-legend{box-shadow:0 2px 8px #0b2d4a26}
+.map-legend .legend-toggle{border:0;background:none;padding:0;font:600 12px var(--sans);color:var(--navy);cursor:pointer;text-align:left}
+.map-legend .legend-body{display:flex;flex-direction:column;gap:5px}
+.map-legend.collapsed .legend-body{display:none}
+.map-legend label{display:flex;gap:6px;align-items:center;margin-top:3px;cursor:pointer}
+.map-legend i.lg-radius{border-radius:50%;border:2px dashed var(--teal);background:#006f8f14;box-sizing:border-box}
+.map-legend i.lg-lead{border-radius:0;background:#8a9aa5}
+.map-zoom{box-shadow:0 2px 8px #0b2d4a26}
+.map-loading{position:absolute;inset:0;display:grid;place-items:center;background:#e8f0f3d9;color:var(--navy);font-weight:600}
+.map-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#0b2d4ae0;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .2s}
+.map-hint.show{opacity:1}
+@media (max-width:860px){.map-basemaps button{padding:5px 8px}}
 /* Transitions */
 @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
@@ -343,6 +391,7 @@ tbody tr:last-child td{border-bottom:0}
 .tour-nav .spacer{flex:1}
 .tour-x{position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:50%;background:var(--paper);color:var(--muted);font-size:18px;cursor:pointer}
 .tour-keys{font-size:12px;color:var(--muted);margin-top:10px}
+@media (max-width:860px){.nav .tour-btn{margin-top:0}}
 @media (max-width:760px){.tour-card:not(.center){left:12px!important;right:12px;top:auto!important;bottom:12px;width:auto}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -382,12 +431,7 @@ tbody tr:last-child td{border-bottom:0}
         </div>
       </div>
 
-      <div class="figures">
-        <div class="figure"><span>Open opportunities</span><strong class="num">248</strong><small>Up 18% on last month</small></div>
-        <div class="figure"><span>Expiring in 30 days</span><strong class="num">37</strong><small class="warn">12 need action this week</small></div>
-        <div class="figure"><span>Estimated pipeline</span><strong class="num">$42.8M</strong><small>$6.2M added this month</small></div>
-        <div class="figure"><span>Contacted this month</span><strong class="num">64%</strong><small>Up 9 points on last month</small></div>
-      </div>
+      <div class="figures" id="figures"></div>
 
       <div class="overview-grid">
         <section class="panel" aria-labelledby="oppTitle">
@@ -414,11 +458,7 @@ tbody tr:last-child td{border-bottom:0}
           </section>
           <section>
             <h2>Recent activity</h2>
-            <ul class="activity">
-              <li>Maya Patel claimed the Piedmont Medical Group acquisition.<time>14 minutes ago</time></li>
-              <li>New deposit signal for Harbor Point Partners.<time>42 minutes ago</time></li>
-              <li>Alex Reynolds scheduled a follow-up with Oak Street Development.<time>2 hours ago</time></li>
-            </ul>
+            <ul class="activity" id="activityList"></ul>
           </section>
         </div>
       </div>
@@ -435,7 +475,7 @@ tbody tr:last-child td{border-bottom:0}
         <div class="toolbar" style="padding-top:16px">
           <input class="input grow" id="conSearch" type="search" placeholder="Search projects, agencies or developers" aria-label="Search contracts">
           <select class="input" id="conStatus" aria-label="Status"><option value="all">Any status</option><option value="open">Open</option><option value="closing">Closing soon</option><option value="awarded">Awarded</option></select>
-          <select class="input" id="conCounty" aria-label="County"><option value="all">All counties</option><option>Greene</option><option>Oconee</option><option>Athens-Clarke</option><option>Chatham</option></select>
+          <select class="input" id="conCounty" aria-label="County"><option value="all">All counties</option><option>Greene</option><option>Oconee</option><option value="Clarke">Clarke (Athens)</option><option>Chatham</option></select>
         </div>
         <ul class="contract-list" id="conList"></ul>
       </section>
@@ -486,14 +526,25 @@ tbody tr:last-child td{border-bottom:0}
       <ul class="agenda" id="evList"></ul>
       <div class="months" id="evCalendar" hidden></div>
       <div class="map" id="evMap" hidden>
+        <div id="leafletMap" role="region" aria-label="Map of events around the selected center"></div>
         <svg id="mapSvg" role="img" aria-label="Map of events around the selected center"></svg>
-        <div class="map-legend">
+        <div class="map-legend" id="mapLegend">
+          <button class="legend-toggle" type="button" aria-expanded="true" onclick="toggleLegend()">Legend</button>
+          <div class="legend-body">
           <span><i style="background:var(--teal)"></i>High relevance (70+)</span>
           <span><i style="background:var(--gold)"></i>Medium (50 to 69)</span>
           <span><i style="background:#9fb0bd"></i>Lower</span>
           <span><i style="background:#fff;border:2px solid var(--red)"></i>Needs a banker</span>
+          <span class="lf-only"><i style="background:var(--navy)"></i>Location center</span>
+          <span class="lf-only"><i class="lg-radius"></i>Search radius</span>
+          <span class="lf-only"><i class="lg-lead"></i>Connected lead</span>
+          <label class="lf-only"><input type="checkbox" id="leadToggle"> Show connected leads</label>
+          </div>
         </div>
-        <div class="map-zoom"><button onclick="mapZoom(1.4)" aria-label="Zoom in">+</button><button onclick="mapZoom(1/1.4)" aria-label="Zoom out">−</button></div>
+        <div class="segmented map-basemaps lf-only" role="group" aria-label="Map style"><button type="button" data-basemap="street" aria-pressed="false">Map</button><button type="button" data-basemap="satellite" aria-pressed="false">Satellite</button><button type="button" data-basemap="hybrid" aria-pressed="false">Hybrid</button></div>
+        <div class="map-loading" id="mapLoading" hidden>Loading map…</div>
+        <div class="map-hint" id="mapHint">Click the map, then scroll to zoom</div>
+        <div class="map-zoom"><button onclick="mapZoom(1.4)" aria-label="Zoom in">+</button><button onclick="mapZoom(1/1.4)" aria-label="Zoom out">−</button><button onclick="mapFit()" aria-label="Fit search area" title="Fit search area">⤢</button></div>
         <div class="map-popup" id="mapPopup" hidden></div>
         <div class="map-empty" id="mapEmpty" hidden>No events in this area. Widen the radius or date range.</div>
       </div>
@@ -517,9 +568,9 @@ tbody tr:last-child td{border-bottom:0}
     <h3>Relationship owner</h3>
     <div class="route"><div><b id="dOwner"></b><p id="dOwnerNote"></p></div><button class="btn btn-quiet btn-small" id="dOwnerBtn"></button></div>
     <div class="actions">
-      <button class="btn btn-primary" onclick="claimOpportunity()">Claim opportunity</button>
+      <button class="btn btn-primary" id="dClaim" onclick="claimOpportunity()">Claim opportunity</button>
       <button class="btn btn-quiet" onclick="openCampaign(current.opp)">Create campaign brief</button>
-      <button class="btn btn-quiet" onclick="toast('Follow-up task created')">Create follow-up</button>
+      <button class="btn btn-quiet" onclick="createFollowUp()">Create follow-up</button>
     </div>
   </div>
 </aside>
@@ -582,7 +633,7 @@ tbody tr:last-child td{border-bottom:0}
       <p style="font-size:13px;color:var(--muted);margin:16px 0 0">Verify public information before reaching out. Don't imply financing is approved or that a need is confirmed.</p>
       <div class="actions" style="justify-content:flex-end">
         <button class="btn btn-quiet" onclick="closeAll();toast('Draft saved')">Save draft</button>
-        <button class="btn btn-primary" onclick="closeAll();toast('Brief submitted for review')">Submit for review</button>
+        <button class="btn btn-primary" onclick="submitBrief()">Submit for review</button>
       </div>
     </div>
   </div>
@@ -590,6 +641,8 @@ tbody tr:last-child td{border-bottom:0}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js" crossorigin="anonymous"></script>
 <script>
 /* ---------- Sample data (anchored to 13 Nov 2026) ---------- */
 const TODAY = new Date('2026-11-13T12:00:00');
@@ -613,11 +666,20 @@ const opps = [
    why:['Announced a second location','Hiring for 40 roles','Equipment purchases likely before opening'],
    next:'Reach out about equipment financing for the new location.'}
 ];
+/* Totals for the whole sample book. The table above shows only its priority slice. */
+const BOOK = {open:248,openTrend:'Up 18% on last month',expiring:37,actionThisWeek:12,pipeline:42.8,addedThisMonth:6.2,contacted:64,contactedTrend:'Up 9 points on last month',
+  markets:{'Atlanta':16.4,'Lake Oconee':11.2,'Athens':8.7,'Savannah':6.5}};
+const COUNTY_MARKET = {Greene:'Lake Oconee',Oconee:'Athens',Clarke:'Athens',Chatham:'Savannah'};
+const activity = [
+  {t:'Maya Patel claimed the Oak Street Development construction loan.',when:'14 minutes ago'},
+  {t:'New deposit signal for Harbor Point Partners.',when:'42 minutes ago'},
+  {t:'Alex Reynolds scheduled a follow-up with Harbor Point Partners.',when:'2 hours ago'}
+];
 const contracts = [
-  {name:'Lake Oconee workforce housing',county:'Greene',type:'Housing development',value:'$18.5M',status:'closing',statusText:'Bid closes in 9 days',dev:'Riverbend Communities',phone:'(706) 555-0184',email:'development@riverbend.example',verified:'12 Nov 2026'},
-  {name:'Savannah logistics expansion',county:'Chatham',type:'Industrial development',value:'$31.0M',status:'open',statusText:'Award in 21 days',dev:'HarborStone Development',phone:'(912) 555-0132',email:'projects@harborstone.example',verified:'12 Nov 2026'},
-  {name:'Athens civic campus renovation',county:'Athens-Clarke',type:'Public works',value:'$7.8M',status:'open',statusText:'RFP open',dev:'Southern Partners Group',phone:'(706) 555-0118',email:'bids@southernpartners.example',verified:'12 Nov 2026'},
-  {name:'Oconee County fire station 4',county:'Oconee',type:'Public works',value:'$4.2M',status:'awarded',statusText:'Awarded',dev:'Watkins Build Co.',phone:'(706) 555-0167',email:'office@watkinsbuild.example',verified:'10 Nov 2026'}
+  {name:'Lake Oconee workforce housing',county:'Greene',type:'Housing development',value:'$18.5M',status:'closing',statusText:'Bid closes in 9 days',days:9,dev:'Riverbend Communities',phone:'(706) 555-0184',email:'development@riverbend.example',verified:'12 Nov 2026'},
+  {name:'Savannah logistics expansion',county:'Chatham',type:'Industrial development',value:'$31.0M',status:'open',statusText:'Award in 21 days',days:21,dev:'HarborStone Development',phone:'(912) 555-0132',email:'projects@harborstone.example',verified:'12 Nov 2026'},
+  {name:'Athens civic campus renovation',county:'Clarke',countyLabel:'Athens-Clarke',type:'Public works',value:'$7.8M',status:'open',statusText:'RFP open',days:30,dev:'Southern Partners Group',phone:'(706) 555-0118',email:'bids@southernpartners.example',verified:'12 Nov 2026'},
+  {name:'Oconee County fire station 4',county:'Oconee',type:'Public works',value:'$4.2M',status:'awarded',statusText:'Awarded',days:60,dev:'Watkins Build Co.',phone:'(706) 555-0167',email:'office@watkinsbuild.example',verified:'10 Nov 2026'}
 ];
 const centers = {
   'Greensboro':[33.575,-83.182],
@@ -646,7 +708,6 @@ const events = [
 ];
 const COUNTIES = ['Greene','Morgan','Putnam','Oconee','Hancock','Taliaferro','Baldwin','Clarke','Walton','Jasper','Fulton'];
 const DEFAULT_COUNTIES = ['Greene','Morgan','Putnam','Oconee','Hancock','Taliaferro','Baldwin','Clarke','Walton'];
-const OWNER_OF = {'Oak Street Development':'Maya Patel','Harbor Point Partners':'Alex Reynolds','Piedmont Medical Group':'Unassigned'};
 events.forEach((e,i)=>{e.id=i;e.score=e.parts.reduce((a,b)=>a+b,0);e.days=daysUntil(e.date);e.assigned='';e.notes=[]});
 
 /* ---------- Helpers ---------- */
@@ -664,6 +725,10 @@ function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(
 let toastTimer;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
 const notify=toast;
+function logActivity(t){activity.unshift({t,when:'Just now'});renderActivity()}
+function renderActivity(){$('#activityList').innerHTML=activity.slice(0,5).map(a=>`<li>${esc(a.t)}<time>${esc(a.when)}</time></li>`).join('')}
+/* Who owns the relationship with a named business, from the opportunity data. */
+function relationshipFor(name){const o=opps.find(x=>x.name===name);return o?{name,owner:o.owner}:null}
 function animateIn(el){if(!el)return;el.classList.remove('enter');void el.offsetWidth;el.classList.add('enter')}
 function rowKey(el,fn){el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})}
 
@@ -710,8 +775,14 @@ function renderSide(){
   $('#soonList').innerHTML=opps.map((o,i)=>({o,i})).filter(({o})=>o.days<=30).sort((a,b)=>a.o.days-b.o.days).map(({o,i})=>
     `<li><div class="soon-days ${o.days<=10?'red':'amber'}">${o.days}<small>days</small></div><div><button data-i="${i}">${esc(o.name)}</button><p>${esc(o.product)}, ${money(o.value)}</p></div></li>`).join('');
   $('#soonList').querySelectorAll('button').forEach(b=>b.onclick=()=>openDrawer(+b.dataset.i));
-  const markets=[['Atlanta',16.4],['Lake Oconee',11.2],['Athens',8.7],['Savannah',6.5]],max=20;
-  $('#marketList').innerHTML=markets.map(([n,v])=>`<li><div class="market-label"><span>${n}</span><b>$${v}M</b></div><div class="bar"><i style="width:${v/max*100}%"></i></div></li>`).join('');
+  const markets=Object.entries(BOOK.markets).sort((a,b)=>b[1]-a[1]),max=Math.max(...markets.map(m=>m[1]))*1.2;
+  $('#marketList').innerHTML=markets.map(([n,v])=>`<li><div class="market-label"><span>${esc(n)}</span><b>$${v.toFixed(1)}M</b></div><div class="bar"><i style="width:${v/max*100}%"></i></div></li>`).join('');
+  $('#figures').innerHTML=[
+    ['Open opportunities',BOOK.open,BOOK.openTrend,''],
+    ['Expiring in 30 days',BOOK.expiring,`${BOOK.actionThisWeek} need action this week`,'warn'],
+    ['Estimated pipeline',`$${BOOK.pipeline.toFixed(1)}M`,`$${BOOK.addedThisMonth.toFixed(1)}M added this month`,''],
+    ['Contacted this month',`${BOOK.contacted}%`,BOOK.contactedTrend,'']
+  ].map(([k,v,n,c])=>`<div class="figure"><span>${esc(k)}</span><strong class="num">${esc(v)}</strong><small class="${c}">${esc(n)}</small></div>`).join('');
 }
 
 /* ---------- Drawer ---------- */
@@ -726,18 +797,26 @@ function openDrawer(i){
   $('#dScore').textContent=o.score;
   $('#dScoreLabel').textContent=o.score>=80?'High-confidence opportunity':'Worth a conversation';
   const rank=[...opps].sort((a,b)=>b.score-a.score).indexOf(o)+1;
-  $('#dRank').textContent=`Ranked ${rank} of 248 open opportunities`;
+  $('#dRank').textContent=`Ranked ${rank} of ${BOOK.open} open opportunities`;
   $('#dFacts').innerHTML=[['Potential value',money(o.value)],['Recommended product',o.product],['Signal',o.signal],['Window',`${o.days} days`]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
   $('#dWhy').innerHTML=o.why.map(w=>`<li>${esc(w)}</li>`).join('');
   $('#dNext').innerHTML=`<b>Next step</b><br>${esc(o.next)}`;
   const has=o.owner!=='Unassigned';
   $('#dOwner').textContent=has?o.owner:'No relationship owner yet';
   $('#dOwnerNote').textContent=has?'The existing relationship owner should lead outreach unless a manager reassigns it.':'Claim it yourself, or ask your manager to assign a banker by market.';
-  $('#dOwnerBtn').textContent=has?'Keep owner':'Claim';
-  $('#dOwnerBtn').onclick=has?()=>toast(`${o.owner} confirmed as owner`):claimOpportunity;
+  $('#dOwnerBtn').textContent='Keep owner';
+  $('#dOwnerBtn').hidden=!has;
+  $('#dOwnerBtn').onclick=()=>toast(`${o.owner} confirmed as owner`);
+  $('#dClaim').hidden=has;
   openLayer('#drawer');
 }
-function claimOpportunity(){const o=opps[current.opp];o.owner='Jordan Davis';renderOpps();renderBrief();closeAll();toast(`${o.name} claimed and assigned to you`)}
+function claimOpportunity(){
+  const o=opps[current.opp];
+  if(o.owner!=='Unassigned'){toast(`${o.name} already belongs to ${o.owner}`);return}
+  o.owner='Jordan Davis';renderOpps();renderBrief();logActivity(`Jordan Davis claimed ${o.name}.`);closeAll();toast(`${o.name} claimed and assigned to you`)
+}
+function createFollowUp(){const o=opps[current.opp];logActivity(`Jordan Davis created a follow-up for ${o.name}.`);toast('Follow-up task created')}
+function submitBrief(){const o=opps[+$('#cOpp').value];logActivity(`Jordan Davis submitted a campaign brief for ${o.name}.`);closeAll();toast('Brief submitted for review')}
 
 /* ---------- Layers ---------- */
 let lastFocus=null;
@@ -758,7 +837,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
 /* ---------- Campaign brief ---------- */
 function openCampaign(i){
   const sel=$('#cOpp');
-  if(!sel.options.length)sel.innerHTML=opps.map((o,j)=>`<option value="${j}">${esc(o.name)}</option>`).join('');
+  if(sel.options.length!==opps.length)sel.innerHTML=opps.map((o,j)=>`<option value="${j}">${esc(o.name)}</option>`).join('');
   sel.value=String(i??current.opp);fillCampaign();openLayer('#campaignModal');
 }
 function fillCampaign(){
@@ -776,21 +855,34 @@ function renderContracts(){
   const list=contracts.filter(x=>(s==='all'||x.status===s)&&(c==='all'||x.county===c)&&`${x.name} ${x.type} ${x.dev} ${x.county}`.toLowerCase().includes(q));
   const tag={closing:'tag-red',open:'tag-teal',awarded:'tag-plain'};
   $('#conList').innerHTML=list.length?list.map((x,i)=>`<li class="contract">
-    <div><h3>${esc(x.name)}</h3><div class="cell-sub">${esc(x.county)} County, ${esc(x.type.toLowerCase())}</div>
-      <div class="contract-value">${x.value} <span style="font:400 13px var(--sans);color:var(--muted)">estimated</span></div>
-      <div class="source">Source: public project announcement. Last verified ${x.verified}.</div></div>
+    <div><h3>${esc(x.name)}</h3><div class="cell-sub">${esc(x.countyLabel||x.county)} County, ${esc(x.type.toLowerCase())}</div>
+      <div class="contract-value">${esc(x.value)} <span style="font:400 13px var(--sans);color:var(--muted)">estimated</span></div>
+      <div class="source">Source: public project announcement. Last verified ${esc(x.verified)}.</div></div>
     <div class="dev"><span class="tag ${tag[x.status]}">${esc(x.statusText)}</span><div style="margin-top:12px"><b>${esc(x.dev)}</b><span>Project developer</span><span>${esc(x.phone)}</span><span><a href="mailto:${esc(x.email)}">${esc(x.email)}</a></span></div></div>
-    <div class="contract-actions"><button class="btn btn-primary btn-small" data-make="${contracts.indexOf(x)}">Create opportunity</button><button class="btn btn-quiet btn-small" data-contact="${contracts.indexOf(x)}">Add contact task</button></div></li>`).join('')
+    <div class="contract-actions">${x.converted?'<button class="btn btn-quiet btn-small" disabled>Opportunity created</button>':`<button class="btn btn-primary btn-small" data-make="${contracts.indexOf(x)}">Create opportunity</button>`}<button class="btn btn-quiet btn-small" data-contact="${contracts.indexOf(x)}">Add contact task</button></div></li>`).join('')
     :`<li class="empty">No records match. Try another county or status.</li>`;
-  $('#conList').querySelectorAll('[data-make]').forEach(b=>b.onclick=()=>toast(`Draft opportunity created from ${contracts[b.dataset.make].name}`));
-  $('#conList').querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>toast(`Contact task added for ${contracts[b.dataset.contact].dev}`));
+  $('#conList').querySelectorAll('[data-make]').forEach(b=>b.onclick=()=>opportunityFromContract(+b.dataset.make));
+  $('#conList').querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{const x=contracts[b.dataset.contact];logActivity(`Jordan Davis added a contact task for ${x.dev}.`);toast(`Contact task added for ${x.dev}`)});
+}
+/* A verified public record becomes an unassigned opportunity. A banker still has to claim it. */
+function opportunityFromContract(i){
+  const x=contracts[i];if(x.converted)return;
+  const value=parseFloat(x.value.replace(/[^0-9.]/g,''))||0,market=COUNTY_MARKET[x.county]||'Athens';
+  const urgency=x.days<=10?'critical':x.days<=30?'urgent':'upcoming';
+  opps.push({name:x.dev,kind:'Prospect',signal:'Public contract',value,days:x.days,urgency,owner:'Unassigned',market,product:x.type==='Public works'?'Contractor financing':'Construction financing',score:70,
+    why:[`Developer on ${x.name}`,`${x.statusText}, per the public record`,`Record last verified ${x.verified}`],
+    next:'Confirm the record is current, then assign a banker to reach out.'});
+  opps.sort((a,b)=>a.days-b.days);
+  x.converted=true;BOOK.open+=1;if(x.days<=30)BOOK.expiring+=1;BOOK.pipeline+=value;BOOK.addedThisMonth+=value;BOOK.markets[market]=(BOOK.markets[market]||0)+value;
+  renderContracts();renderOpps();renderSide();renderBrief();logActivity(`Jordan Davis created an opportunity for ${x.dev} from a public contract.`);
+  toast(`${x.dev} added to opportunities, unassigned`);
 }
 
 /* ---------- Events: filters ---------- */
 function haversine([a,b],[c,d]){const R=3958.8,r=x=>x*Math.PI/180,dl=r(c-a),dn=r(d-b);const h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 function initEventFilters(){
-  $('#evCenter').innerHTML=Object.keys(centers).map(c=>`<option>${c}</option>`).join('');
-  $('#evCounties').innerHTML=COUNTIES.map(c=>`<label class="chip"><input type="checkbox" value="${c}" ${DEFAULT_COUNTIES.includes(c)?'checked':''}> ${c}</label>`).join('');
+  $('#evCenter').innerHTML=Object.keys(centers).map(c=>`<option>${esc(c)}</option>`).join('');
+  $('#evCounties').innerHTML=COUNTIES.map(c=>`<label class="chip"><input type="checkbox" value="${esc(c)}" ${DEFAULT_COUNTIES.includes(c)?'checked':''}> ${esc(c)}</label>`).join('');
   ['#evKeyword','#evRadius','#evMin'].forEach(s=>$(s).addEventListener('input',renderEvents));
   ['#evCenter','#evDays','#evType','#evFree','#evConnected','#evSort'].forEach(s=>$(s).addEventListener('change',renderEvents));
   $('#evCounties').addEventListener('change',renderEvents);
@@ -835,7 +927,7 @@ function coverageTag(e){return e.assigned?`<span class="tag tag-green">Covered b
 function renderList(){
   $('#evList').innerHTML=visible.length?visible.map(e=>{const b=band(e.score);return `<li class="event" tabindex="0" data-e="${e.id}">
     <div class="datebox"><span>${fmtDate(e.date,{month:'short'})}</span><b>${fmtDate(e.date,{day:'numeric'})}</b><span>${fmtDate(e.date,{weekday:'short'})}</span></div>
-    <div><h3>${esc(e.name)}</h3><div class="event-where">${e.time} at ${esc(e.venue)}, ${esc(e.town)}. ${dist(e)}, ${e.cost==='Free'?'free':e.cost}.</div>
+    <div><h3>${esc(e.name)}</h3><div class="event-where">${esc(e.time)} at ${esc(e.venue)}, ${esc(e.town)}. ${dist(e)}, ${e.cost==='Free'?'free':esc(e.cost)}.</div>
       <p class="event-why">${esc(e.reason)}</p>
       <div class="event-tags"><span class="tag tag-plain">${esc(e.type)}</span>${e.leads.length?`<span class="tag tag-teal">${e.leads.length} connected ${e.leads.length>1?'leads':'lead'}</span>`:''}${coverageTag(e)}</div></div>
     <div class="score ${b}"><b>${e.score}</b><span>${bandName[b]} relevance</span><span class="meter"><i style="width:${e.score}%"></i></span></div></li>`}).join('')
@@ -855,7 +947,7 @@ function renderCalendar(){
     for(let d=1;d<=len;d++){
       const key=`${mk}-${String(d).padStart(2,'0')}`;
       const evs=visible.filter(e=>e.date===key);
-      cells+=`<div class="day ${key===todayKey?'today':''}"><span class="day-num">${d}</span>${evs.map(e=>`<button class="cal-event ${band(e.score)}" data-e="${e.id}">${e.time}<br>${esc(e.name)}</button>`).join('')}</div>`;
+      cells+=`<div class="day ${key===todayKey?'today':''}"><span class="day-num">${d}</span>${evs.map(e=>`<button class="cal-event ${band(e.score)}" data-e="${e.id}">${esc(e.time)}<br>${esc(e.name)}</button>`).join('')}</div>`;
     }
     const trail=(7-(start+len)%7)%7;for(let i=0;i<trail;i++)cells+='<div class="day out"></div>';
     return `<section class="month"><h3>${first.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</h3><div class="month-grid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="dow">${d}</div>`).join('')}${cells}</div></section>`;
@@ -865,8 +957,10 @@ function renderCalendar(){
 
 /* ---------- Map ---------- */
 let mapScale=1;
-function mapZoom(k){mapScale=Math.max(.5,Math.min(4,mapScale*k));renderMap()}
-function renderMap(){
+function mapZoom(k){if(leafletOn()){k>1?lmap.zoomIn():lmap.zoomOut();return}mapScale=Math.max(.5,Math.min(4,mapScale*k));renderSvgMap()}
+function mapFit(){if(leafletOn()){lmap.fitBounds(lmapCircle.getBounds(),{padding:[16,16]});return}mapScale=1;renderSvgMap()}
+/* Drawn map: used when the real map can't load (no internet). */
+function renderSvgMap(){
   const svg=$('#mapSvg'),W=1000,H=560,f=readFilters(),c=centers[f.center];
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const half=Math.max(+f.radius*1.35,25)/mapScale,ppm=(H/2)/half;
@@ -876,15 +970,27 @@ function renderMap(){
   for(let x=W/2%step;x<W;x+=step)g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#dde8ec"/>`;
   for(let y=H/2%step;y<H;y+=step)g+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#dde8ec"/>`;
   g+=`<circle cx="${W/2}" cy="${H/2}" r="${+f.radius*ppm}" fill="#006f8f12" stroke="#006f8f66" stroke-width="2" stroke-dasharray="6 5"/>`;
-  towns.forEach(([n,la,ln])=>{const [x,y]=proj([la,ln]);if(x>-50&&x<W+50&&y>-20&&y<H+20)g+=`<circle cx="${x}" cy="${y}" r="3" fill="#8fa6b5"/><text x="${x+7}" y="${y+4}" font-size="13" fill="#6b8291" font-family="Public Sans,sans-serif">${n}</text>`});
-  g+=`<g><circle cx="${W/2}" cy="${H/2}" r="7" fill="#0b2d4a" stroke="#fff" stroke-width="3"/><text x="${W/2}" y="${H/2+26}" text-anchor="middle" font-size="13" font-weight="700" fill="#0b2d4a" font-family="Public Sans,sans-serif">${esc(f.center)}</text></g>`;
-  g+=`<text x="${W-16}" y="${H-16}" text-anchor="end" font-size="12" fill="#6b8291" font-family="Public Sans,sans-serif">Grid lines every 10 miles</text>`;
+  /* Place pins first so town labels can steer clear of them. */
   const placed=[];
-  const col={high:'#006f8f',medium:'#c6a15b',low:'#9fb0bd'};
   visible.forEach(e=>{
     let [x,y]=proj(e.ll);
-    while(placed.some(([px,py])=>Math.hypot(px-x,py-y)<20)){x+=16;y-=6}
-    placed.push([x,y]);
+    while(placed.some(p=>Math.hypot(p.x-x,p.y-y)<22)){x+=18;y-=6}
+    placed.push({x,y,e});
+  });
+  const centerLabelY=placed.some(p=>Math.abs(p.x-W/2)<45&&p.y>H/2&&p.y<H/2+40)?H/2-16:H/2+26;
+  const blocked=(lx,ly,w)=>placed.some(p=>p.x>lx-14&&p.x<lx+w+14&&Math.abs(p.y-ly)<18)||(Math.abs(lx+w/2-W/2)<w/2+45&&Math.abs(ly-centerLabelY)<18);
+  towns.forEach(([n,la,ln])=>{
+    if(n===f.center)return;
+    const [x,y]=proj([la,ln]);
+    if(x<-50||x>W+50||y<-20||y>H+20)return;
+    g+=`<circle cx="${x}" cy="${y}" r="3" fill="#8fa6b5"/>`;
+    const w=n.length*7.2,right=!blocked(x+7,y,w),left=!right&&!blocked(x-7-w,y,w);
+    if(right||left)g+=`<text class="label" x="${right?x+7:x-7}" y="${y+4}" text-anchor="${right?'start':'end'}" font-size="13" fill="#6b8291" font-family="Public Sans,sans-serif">${esc(n)}</text>`;
+  });
+  g+=`<g><circle cx="${W/2}" cy="${H/2}" r="7" fill="#0b2d4a" stroke="#fff" stroke-width="3"/><text class="label" x="${W/2}" y="${centerLabelY}" text-anchor="middle" font-size="13" font-weight="700" fill="#0b2d4a" font-family="Public Sans,sans-serif">${esc(f.center)}</text></g>`;
+  g+=`<text x="${W-16}" y="${H-16}" text-anchor="end" font-size="12" fill="#6b8291" font-family="Public Sans,sans-serif">Grid lines every 10 miles</text>`;
+  const col={high:'#006f8f',medium:'#c6a15b',low:'#9fb0bd'};
+  placed.forEach(({x,y,e})=>{
     const need=e.score>=70&&!e.assigned;
     g+=`<g class="pin" tabindex="0" role="button" aria-label="${esc(e.name)}, relevance ${e.score}" data-e="${e.id}" data-x="${x}" data-y="${y}">
       ${need?`<circle class="ring" cx="${x}" cy="${y}" r="15" fill="none" stroke="#b33c43" stroke-width="2.5"/>`:`<circle class="ring" cx="${x}" cy="${y}" r="12" fill="none" stroke="transparent" stroke-width="3"/>`}
@@ -900,11 +1006,103 @@ function mapPopup(i,x,y){
   const px=x/1000*box.width,py=y/560*box.height;
   pop.style.left=Math.min(box.width-275,Math.max(10,px+16))+'px';
   pop.style.top=Math.min(box.height-190,Math.max(10,py-30))+'px';
-  pop.innerHTML=`<button class="x" aria-label="Close" onclick="this.parentNode.hidden=true">×</button><h4>${esc(e.name)}</h4><p>${fmtDate(e.date,{weekday:'short',month:'short',day:'numeric'})}, ${e.time}<br>${esc(e.venue)}, ${dist(e)}<br>Relevance ${e.score}. ${e.assigned?`Covered by ${esc(e.assigned)}.`:'No banker assigned.'}</p><button class="btn btn-primary btn-small" style="width:100%">View details</button>`;
+  pop.innerHTML=`<button class="x" aria-label="Close" onclick="this.parentNode.hidden=true">×</button><h4>${esc(e.name)}</h4><p>${fmtDate(e.date,{weekday:'short',month:'short',day:'numeric'})}, ${esc(e.time)}<br>${esc(e.venue)}, ${dist(e)}<br>Relevance ${e.score}. ${e.assigned?`Covered by ${esc(e.assigned)}.`:'No banker assigned.'}</p><button class="btn btn-primary btn-small" style="width:100%">View details</button>`;
   pop.querySelector('.btn').onclick=()=>openEvent(i);
   pop.hidden=false;
 }
 $('#evMap').addEventListener('click',e=>{if(!e.target.closest('.pin,.map-popup,.map-zoom'))$('#mapPopup').hidden=true});
+
+/* ---------- Real map (Leaflet) ---------- */
+// Sample locations for connected leads (shown only when "Show connected leads" is on).
+const LEAD_LL={'Oconee Crossing LLC':[33.854,-83.421],'Piedmont Medical Group':[33.49,-83.23],'Cedar Ridge Holdings':[33.635,-83.09],'Oak Street Development':[33.945,-83.39],'Harbor Point Partners':[33.608,-83.155]};
+const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
+const ESRI_IMAGERY='Imagery &copy; Esri, Maxar, Earthstar Geographics';
+const BASEMAPS={
+  street:[[ESRI+'World_Street_Map/MapServer/tile/{z}/{y}/{x}','Map &copy; Esri, HERE, Garmin, USGS, &copy; OpenStreetMap contributors']],
+  satellite:[[ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',ESRI_IMAGERY]],
+  hybrid:[[ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',ESRI_IMAGERY],[ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',''],[ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}','Labels &copy; Esri']]
+};
+let lmap=null,lmapFailed=false,lmapBase=null,lmapBaseName='',lmapCluster,lmapLeads,lmapLinks,lmapCircle,lmapCenter,lmapFitKey='',lmapTilesOk=false,lmapTileErrors=0,hintTimer;
+const leafletOn=()=>!!lmap&&!lmapFailed&&$('#evMap').classList.contains('is-leaflet');
+function renderMap(){
+  const box=$('#evMap');
+  if(!lmapFailed&&window.L&&L.markerClusterGroup){box.classList.add('is-leaflet');initLeaflet();renderLeaflet()}
+  else{box.classList.remove('is-leaflet');renderSvgMap()}
+}
+function useSvgMap(msg){
+  if(lmapFailed)return;lmapFailed=true;$('#mapLoading').hidden=true;$('#evMap').classList.remove('is-leaflet');renderSvgMap();if(msg)toast(msg);
+}
+function initLeaflet(){
+  if(lmap)return;
+  const c=centers[readFilters().center];
+  lmap=L.map('leafletMap',{zoomControl:false,scrollWheelZoom:false,minZoom:6,maxZoom:18,zoomSnap:.25,zoomDelta:1,wheelPxPerZoomLevel:90}).setView(c,9);
+  lmap.attributionControl.setPosition('bottomleft');
+  L.control.scale({imperial:true,metric:false,position:'bottomleft'}).addTo(lmap);
+  lmapCircle=L.circle(c,{radius:1,interactive:false,weight:2.5,dashArray:'7 6'}).addTo(lmap);
+  lmapCenter=L.marker(c,{interactive:false,keyboard:false,zIndexOffset:-1000}).addTo(lmap);
+  lmapCluster=L.markerClusterGroup({maxClusterRadius:45,showCoverageOnHover:false,spiderfyOnMaxZoom:true,
+    iconCreateFunction:cl=>{const need=cl.getAllChildMarkers().some(m=>m.options.need);return L.divIcon({className:'lf-icon',html:`<div class="lcluster${need?' need':''}">${cl.getChildCount()}</div>`,iconSize:[36,36]})}}).addTo(lmap);
+  lmapLeads=L.layerGroup().addTo(lmap);lmapLinks=L.layerGroup().addTo(lmap);
+  lmap.on('popupclose',()=>lmapLinks.clearLayers());
+  // The mouse wheel scrolls the page until the user clicks into the map.
+  const host=$('#leafletMap');
+  host.addEventListener('mousedown',()=>lmap.scrollWheelZoom.enable());
+  host.addEventListener('mouseleave',()=>lmap.scrollWheelZoom.disable());
+  host.addEventListener('wheel',()=>{if(lmap.scrollWheelZoom.enabled())return;const h=$('#mapHint');h.classList.add('show');clearTimeout(hintTimer);hintTimer=setTimeout(()=>h.classList.remove('show'),1400)},{passive:true});
+  document.querySelectorAll('[data-basemap]').forEach(b=>b.onclick=()=>setBasemap(b.dataset.basemap));
+  $('#leadToggle').onchange=renderMap;
+  if(matchMedia('(max-width:860px)').matches)toggleLegend(true);
+  $('#mapLoading').hidden=false;setTimeout(()=>$('#mapLoading').hidden=true,6000);
+  setBasemap(BASEMAPS[store('bsBasemap')]?store('bsBasemap'):'hybrid');
+}
+function setBasemap(name){
+  if(name===lmapBaseName)return;lmapBaseName=name;store('bsBasemap',name);
+  if(lmapBase)lmap.removeLayer(lmapBase);
+  lmapBase=L.layerGroup(BASEMAPS[name].map(([url,attribution])=>{
+    const t=L.tileLayer(url,{maxZoom:18,maxNativeZoom:name==='street'?18:17,attribution});
+    t.on('tileload',()=>{lmapTilesOk=true;$('#mapLoading').hidden=true});
+    t.on('tileerror',()=>{if(!lmapTilesOk&&++lmapTileErrors>=8)useSvgMap('The detailed map could not load, so the simple map is shown.')});
+    return t})).addTo(lmap);
+  const onPhoto=name!=='street';
+  lmapCircle.setStyle(onPhoto?{color:'#ffffff',opacity:.9,fillColor:'#ffffff',fillOpacity:.08}:{color:'#006f8f',opacity:.7,fillColor:'#006f8f',fillOpacity:.07});
+  document.querySelectorAll('[data-basemap]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.basemap===name));
+}
+function toggleLegend(collapse){
+  const l=$('#mapLegend'),c=collapse===true?true:!l.classList.contains('collapsed');
+  l.classList.toggle('collapsed',c);l.querySelector('.legend-toggle').setAttribute('aria-expanded',!c);
+}
+function leafletPopup(e){
+  const n=e.leads.length;
+  return `<h4>${esc(e.name)}</h4><p>${fmtDate(e.date,{weekday:'short',month:'short',day:'numeric'})}, ${e.time}<br>${esc(e.type)}<br>${esc(e.venue)}, ${dist(e)}<br>Relevance ${e.score} · ${n} connected ${n===1?'lead':'leads'}<br>${e.assigned?`Covered by ${esc(e.assigned)}.`:'No banker assigned.'}</p><button class="btn btn-primary btn-small" style="width:100%" onclick="lmap.closePopup();openEvent(${e.id})">View details</button>`;
+}
+function leadBand(name){const o=opps.find(x=>x.name===name);return o?band(o.score):''}
+function drawLeadLinks(e){
+  lmapLinks.clearLayers();if(!$('#leadToggle').checked)return;
+  e.leads.forEach(([name])=>{const ll=LEAD_LL[name];if(ll)L.polyline([e.ll,ll],{color:lmapBaseName==='street'?'#0b2d4a':'#ffffff',weight:2,opacity:.85,dashArray:'4 5',interactive:false}).addTo(lmapLinks)});
+}
+function renderLeaflet(){
+  lmap.invalidateSize();
+  const f=readFilters(),c=centers[f.center],miles=+f.radius;
+  lmapCircle.setLatLng(c).setRadius(miles*1609.34);
+  lmapCenter.setLatLng(c).setIcon(L.divIcon({className:'lf-icon',html:`<div class="lcenter"><span>${esc(f.center)}</span></div>`,iconSize:[16,16],iconAnchor:[8,8]}));
+  lmap.closePopup();lmapCluster.clearLayers();lmapLeads.clearLayers();lmapLinks.clearLayers();
+  lmapCluster.addLayers(visible.map(e=>{
+    const need=e.score>=70&&!e.assigned;
+    const m=L.marker(e.ll,{title:e.name,alt:`${e.name}, relevance ${e.score}`,need,riseOnHover:true,
+      icon:L.divIcon({className:'lf-icon',html:`<div class="lpin ${band(e.score)}${need?' need':''}">${e.score}</div>`,iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-12]})});
+    m.bindPopup(()=>leafletPopup(e),{className:'lf-popup',minWidth:232,maxWidth:232,autoPanPaddingTopLeft:[20,60],autoPanPaddingBottomRight:[60,20]});
+    m.on('popupopen',()=>drawLeadLinks(e));
+    return m}));
+  if($('#leadToggle').checked){
+    const seen=new Set();
+    visible.forEach(e=>e.leads.forEach(([name])=>{const ll=LEAD_LL[name];if(!ll||seen.has(name))return;seen.add(name);
+      L.marker(ll,{keyboard:false,icon:L.divIcon({className:'lf-icon',html:`<div class="llead ${leadBand(name)}"></div>`,iconSize:[13,13],iconAnchor:[6,6]})}).bindTooltip(`${esc(name)} (connected lead)`).addTo(lmapLeads)}));
+  }
+  $('#mapEmpty').hidden=visible.length>0;$('#mapPopup').hidden=true;
+  const key=f.center+'|'+miles;
+  if(key!==lmapFitKey){lmapFitKey=key;lmap.fitBounds(lmapCircle.getBounds(),{padding:[16,16],animate:false})}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lmap)lmap.closePopup()});
 
 /* ---------- Event detail ---------- */
 function openEvent(i){
@@ -912,17 +1110,26 @@ function openEvent(i){
   $('#eTitle').textContent=e.name;
   $('#eSub').textContent=`${fmtDate(e.date,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} at ${e.time}`;
   $('#eFacts').innerHTML=[['Type',e.type],['Cost',e.cost],['Venue',`${e.venue}, ${e.town}`],['Distance',`${dist(e)}, ${e.county} County`],['Organizer',e.organizer],['Sponsors',e.sponsors]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')
-    +`<div class="wide"><dt>Agenda</dt><dd>${esc(e.agenda)}</dd></div><div class="wide"><dt>Source</dt><dd style="font-weight:400">${esc(e.source)}, updated ${e.updated}</dd></div>`;
+    +`<div class="wide"><dt>Agenda</dt><dd>${esc(e.agenda)}</dd></div><div class="wide"><dt>Source</dt><dd style="font-weight:400">${esc(e.source)}, updated ${esc(e.updated)}</dd></div>`;
   $('#eScoreNote').textContent=`${e.score} of 100, ${bandName[band(e.score)].toLowerCase()}`;
   $('#eStack').innerHTML=SCORE_PARTS.map(([n,,c],j)=>`<i style="width:${e.parts[j]}%;background:${c}" title="${n}: ${e.parts[j]}"></i>`).join('');
   $('#eStackKey').innerHTML=SCORE_PARTS.map(([n,max,c],j)=>`<div><b>${e.parts[j]}<span style="font:400 12px var(--sans);color:var(--muted)"> / ${max}</span></b><em style="background:${c}"></em>${n}</div>`).join('');
   $('#eLeads').innerHTML=e.leads.length?e.leads.map(([n,w])=>`<div class="lead"><b>${esc(n)}</b>. ${esc(w)}</div>`).join(''):'<p style="margin:0;font-size:14px;color:var(--muted)">No existing lead is connected. Treat this as a prospecting opportunity.</p>';
   $('#ePrep').textContent=`Look for ${e.speakers}. Ask about project timing, capital structure, operating accounts and treasury needs. Lead with local relationship support and financing for acquisition, construction or expansion. Whether to attend is the banker’s call.`;
-  const owner=e.leads.length?(OWNER_OF[e.leads[0][0]]??'Jordan Davis'):'Unassigned';
-  e.owner=owner;
-  $('#eOwner').textContent=owner==='Unassigned'?'No existing relationship':owner;
-  $('#eOwnerNote').textContent=owner==='Unassigned'?'Assign a banker by market and expertise.':`Owns the relationship with ${e.leads[0][0]}. Route the event through them first.`;
-  $('#eOwnerBtn').hidden=owner==='Unassigned';
+  const rels=e.leads.map(([n])=>relationshipFor(n)).filter(Boolean);
+  const owned=rels.find(r=>r.owner!=='Unassigned');
+  e.owner=owned?owned.owner:'Unassigned';
+  if(owned){
+    $('#eOwner').textContent=owned.owner;
+    $('#eOwnerNote').textContent=`Owns the relationship with ${owned.name}. Route the event through them first.`;
+  }else if(rels.length){
+    $('#eOwner').textContent='No banker yet';
+    $('#eOwnerNote').textContent=`${rels[0].name} is an open opportunity with no banker. Claim it from Overview, or assign one here.`;
+  }else{
+    $('#eOwner').textContent='No existing relationship';
+    $('#eOwnerNote').textContent=e.leads.length?`${e.leads[0][0]} is a lead but not yet a bank relationship. Assign a banker by market and expertise.`:'Assign a banker by market and expertise.';
+  }
+  $('#eOwnerBtn').hidden=!owned;
   $('#eBanker').value=e.assigned||'Unassigned';
   $('#eCoverage').textContent=e.assigned?`Covered by ${e.assigned}`:'';
   $('#nCompany').value='';$('#nDate').value=e.date;$('#nText').value='';
@@ -934,7 +1141,8 @@ function assignEvent(){
   const e=events[current.event],b=$('#eBanker').value;
   e.assigned=b==='Unassigned'?'':b;
   $('#eCoverage').textContent=e.assigned?`Covered by ${e.assigned}`:'';
-  renderEvents();toast(e.assigned?`${e.assigned} assigned to ${e.name}`:'Banker removed from this event');
+  renderEvents();if(e.assigned)logActivity(`${e.assigned} assigned to cover ${e.name}.`);
+  toast(e.assigned?`${e.assigned} assigned to ${e.name}`:'Banker removed from this event');
 }
 function saveNote(){
   const e=events[current.event],t=$('#nText').value.trim(),co=$('#nCompany').value.trim();
@@ -947,7 +1155,7 @@ function renderNotes(e){$('#eNotes').innerHTML=e.notes.map(n=>`<li><b>${esc(n.co
 ['#oppSearch','#oppUrgency','#oppMarket'].forEach(s=>$(s).addEventListener(s==='#oppSearch'?'input':'change',renderOpps));
 ['#conSearch','#conStatus','#conCounty'].forEach(s=>$(s).addEventListener(s==='#conSearch'?'input':'change',renderContracts));
 $('#topSearch').addEventListener('input',e=>{if(location.hash&&location.hash!=='#overview')location.hash='overview';$('#oppSearch').value=e.target.value;renderOpps()});
-renderBrief();renderOpps();renderSide();renderContracts();initEventFilters();renderEvents();route();
+renderBrief();renderOpps();renderSide();renderActivity();renderContracts();initEventFilters();renderEvents();route();
 
 /* ---------- Walkthrough ---------- */
 const Tour=(()=>{
@@ -977,26 +1185,28 @@ const Tour=(()=>{
      body:'Events placed by real location around the selected town, with the search radius drawn to scale. Red rings need a banker.'},
     {page:'events',target:'#eventModal .modal-card',run:()=>{setView('list');openEvent(TOP_EVENT)},title:'A score you can explain',
      body:'Relevance breaks into five parts: connected leads, event type, developer attendance, distance and cost. Prep notes tell whoever attends who to look for.'},
-    {page:'events',target:'#eventModal .inline-form',keep:true,run:()=>{if($('#eventModal').hidden)openEvent(TOP_EVENT);setTimeout(()=>{if(!active)return;$('#eBanker').value='Jordan Davis';assignEvent();assignedByTour=true},900)},title:'Assign coverage',
+    {page:'events',target:'#eventModal .inline-form',keep:true,run:()=>{if($('#eventModal').hidden)openEvent(TOP_EVENT);const tok=seq;setTimeout(()=>{if(active&&tok===seq)demoAssign()},900)},title:'Assign coverage',
      body:'Assigning a banker clears the “Needs a banker” flag everywhere: in the list, on the calendar and on the map.'},
-    {page:'events',target:'#evList .event',run:()=>{closeAll(true);setView('list')},title:'Coverage updated',
+    {page:'events',target:`#evList [data-e="${TOP_EVENT}"]`,run:()=>{demoAssign();closeAll(true);setView('list')},title:'Coverage updated',
      body:'Greene County Planning Commission now shows who is covering it, and the count of events needing a banker went down by one.'},
     {page:'overview',center:true,title:'Where the data comes from',
      body:'Contract signals and events are built to be fed by the county scraper, which reads commission agendas, public hearings and development postings from 30 county websites across Middle and East Georgia. Everything shown today is sample data.'}
   ];
-  const AUTO_MS=8000;
-  let i=0,active=false,auto=false,timer=null,raf=null,assignedByTour=false;
+  const AUTO_MS=8000,ASSIGN_STEP=steps.findIndex(s=>s.title==='Assign coverage');
+  let i=0,active=false,auto=false,timer=null,raf=null,assignedByTour=false,tourLog=null,seq=0,saved=null;
   let block,spot,card;
 
   function build(){
     block=document.createElement('div');block.className='tour-block';
     spot=document.createElement('div');spot.className='tour-spot';
-    card=document.createElement('div');card.className='tour-card';card.setAttribute('role','dialog');card.setAttribute('aria-live','polite');
+    card=document.createElement('div');card.className='tour-card';card.setAttribute('role','dialog');card.setAttribute('aria-label','Guided walkthrough');card.setAttribute('aria-live','polite');
     document.body.append(block,spot,card);
   }
   function start(){
     if(active)return;
-    closeAll(true);applyFilters(DEFAULTS);setView('list');
+    closeAll(true);
+    saved={f:readFilters(),sort:$('#evSort').value,view,assigned:events[TOP_EVENT].assigned};
+    events[TOP_EVENT].assigned='';$('#evSort').value='score';applyFilters(DEFAULTS);setView('list');
     if(!block)build();
     active=true;i=0;block.hidden=spot.hidden=card.hidden=false;
     document.addEventListener('keydown',keys,true);
@@ -1006,25 +1216,34 @@ const Tour=(()=>{
     active=false;stopAuto();cancelAnimationFrame(raf);
     document.removeEventListener('keydown',keys,true);
     block.hidden=spot.hidden=card.hidden=true;
-    if(assignedByTour){events[TOP_EVENT].assigned='';assignedByTour=false;renderEvents()}
-    closeAll(true);setView('list');
+    seq++;undoAssign();closeAll(true);
+    if(saved){events[TOP_EVENT].assigned=saved.assigned;$('#evSort').value=saved.sort;applyFilters(saved.f);setView(saved.view);saved=null}
     if(location.hash!=='#overview')location.hash='overview';else route();
+  }
+  function demoAssign(){
+    if(assignedByTour)return;current.event=TOP_EVENT;$('#eBanker').value='Jordan Davis';assignEvent();assignedByTour=true;tourLog=activity[0];
+  }
+  /* Take back the demo assignment, including its line in Recent activity. */
+  function undoAssign(){
+    if(!assignedByTour)return;assignedByTour=false;events[TOP_EVENT].assigned='';
+    const k=activity.indexOf(tourLog);if(k>=0)activity.splice(k,1);tourLog=null;renderActivity();renderEvents();
   }
   function go(n){if(n<0||n>=steps.length)return;i=n;show()}
   function next(){if(i<steps.length-1)go(i+1);else end()}
   function back(){go(i-1)}
   function show(){
-    const s=steps[i];
+    const s=steps[i],tok=++seq;
     card.classList.add('swap');
+    if(i<ASSIGN_STEP)undoAssign();
     if(!s.keep)closeAll(true);
     if(location.hash.slice(1)!==s.page)location.hash=s.page;
     setTimeout(()=>{
-      if(!active)return;
+      if(!active||tok!==seq)return;
       if(s.run)s.run();
       setTimeout(()=>{
-        if(!active)return;
+        if(!active||tok!==seq)return;
         const el=s.target&&$(s.target);
-        if(el)el.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+        if(el)el.scrollIntoView({block:innerWidth<=760?'start':'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
         render(s);
         card.classList.remove('swap');
         if(auto)arm();
@@ -1056,7 +1275,8 @@ const Tour=(()=>{
     spot.classList.remove('full');
     const el=$(s.target);if(!el)return;
     const r=el.getBoundingClientRect(),p=8;
-    const t=Math.max(r.top-p,6),l=Math.max(r.left-p,6),b=Math.min(r.bottom+p,vh-6),rt=Math.min(r.right+p,vw-6);
+    const floor=vw<=760?card.getBoundingClientRect().top-10:vh-6;
+    const t=Math.max(r.top-p,6),l=Math.max(r.left-p,6),b=Math.min(r.bottom+p,floor),rt=Math.min(r.right+p,vw-6);
     Object.assign(spot.style,{left:l+'px',top:t+'px',width:Math.max(0,rt-l)+'px',height:Math.max(0,b-t)+'px'});
     if(vw<=760)return;
     const clampY=y=>Math.min(Math.max(g,y),vh-H-g),clampX=x=>Math.min(Math.max(g,x),vw-W-g);
