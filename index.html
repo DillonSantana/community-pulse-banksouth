@@ -361,7 +361,6 @@ tbody tr:last-child td{border-bottom:0}
   .nav a,.nav button{width:auto;padding:7px 10px;font-size:13px}
 }
 #mapSvg text.label{paint-order:stroke;stroke:#eef4f6;stroke-width:4px;stroke-linejoin:round}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* Real map (Leaflet). Falls back to the drawn SVG map when offline. */
 .drawer:not(.open){box-shadow:none}
@@ -408,6 +407,39 @@ tbody tr:last-child td{border-bottom:0}
 .map-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#0b2d4ae0;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .2s}
 .map-hint.show{opacity:1}
 @media (max-width:860px){.map-basemaps button{padding:5px 8px}}
+/* Transitions */
+@keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.enter{animation:enter .4s cubic-bezier(.2,.7,.2,1) both}
+.modal:not([hidden]) .modal-card{animation:pop .26s cubic-bezier(.2,.7,.2,1) both}
+.modal:not([hidden]),.scrim:not([hidden]){animation:fade .2s ease both}
+.modal:not([hidden]){background:#0b2d4a66}
+
+/* Walkthrough */
+.nav .tour-btn{margin-top:14px;border:1px solid #2f5b7b;color:#fff}
+.nav .tour-btn:hover{border-color:var(--gold)}
+.tour-block{position:fixed;inset:0;z-index:48}
+.tour-spot{position:fixed;z-index:49;border-radius:12px;pointer-events:none;box-shadow:0 0 0 2px var(--gold),0 0 0 200vmax #0b2d4a8c;transition:top .5s cubic-bezier(.2,.7,.2,1),left .5s cubic-bezier(.2,.7,.2,1),width .5s cubic-bezier(.2,.7,.2,1),height .5s cubic-bezier(.2,.7,.2,1)}
+.tour-spot.full{box-shadow:0 0 0 0 transparent,0 0 0 200vmax #0b2d4ad9}
+.tour-card{position:fixed;z-index:50;width:320px;background:var(--surface);border-radius:12px;box-shadow:0 18px 50px #0b2d4a59;padding:20px 20px 16px;transition:top .5s cubic-bezier(.2,.7,.2,1),left .5s cubic-bezier(.2,.7,.2,1),opacity .2s}
+.tour-card.swap{opacity:0}
+.tour-card.center{width:min(560px,calc(100vw - 32px));padding:36px 38px 30px}
+.tour-step{font-size:12px;color:var(--muted);margin:0 0 6px}
+.tour-card h2{font-size:20px;line-height:1.25;margin:0 0 8px}
+.tour-card.center h2{font-size:30px;margin-bottom:12px}
+.tour-card p.tour-body{margin:0;font-size:14px;line-height:1.55;color:var(--ink)}
+.tour-card.center p.tour-body{font-size:16px;max-width:46ch}
+.tour-rule{width:44px;height:3px;border-radius:2px;background:var(--gold);margin:0 0 18px}
+.tour-progress{height:3px;background:var(--line-soft);border-radius:2px;margin:16px 0 12px;overflow:hidden}
+.tour-progress i{display:block;height:100%;width:0;background:var(--gold)}
+.tour-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tour-nav .spacer{flex:1}
+.tour-x{position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:50%;background:var(--paper);color:var(--muted);font-size:18px;cursor:pointer}
+.tour-keys{font-size:12px;color:var(--muted);margin-top:10px}
+@media (max-width:860px){.nav .tour-btn{margin-top:0}}
+@media (max-width:760px){.tour-card:not(.center){left:12px!important;right:12px;top:auto!important;bottom:12px;width:auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -417,8 +449,10 @@ tbody tr:last-child td{border-bottom:0}
     <nav class="nav" aria-label="Main">
       <a href="#overview" data-nav="overview">Overview</a>
       <a href="#contracts" data-nav="contracts">Contract signals</a>
+      <a href="#signals" data-nav="signals">County signals</a>
       <a href="#events" data-nav="events">Where to be</a>
       <button type="button" onclick="openCampaign()">Campaign brief</button>
+      <button type="button" class="tour-btn" onclick="Tour.start()">Walkthrough</button>
     </nav>
     <div class="rail-foot">Data refreshed 18 minutes ago<br>Sample data for demonstration</div>
   </aside>
@@ -491,6 +525,22 @@ tbody tr:last-child td{border-bottom:0}
           <select class="input" id="conCounty" aria-label="County"><option value="all">All counties</option><option>Greene</option><option>Oconee</option><option value="Clarke">Clarke (Athens)</option><option>Chatham</option></select>
         </div>
         <ul class="contract-list" id="conList"></ul>
+      </section>
+    </section>
+
+    <section class="page" id="page-signals" data-page="signals" hidden>
+      <div class="page-head">
+        <div><h1>County signals</h1><p>Real development items pulled from county commission and planning agendas by our county scraper. Rezonings, annexations and subdivisions often come before a financing need.</p></div>
+      </div>
+      <p class="notice" id="sigNotice"></p>
+      <section class="panel">
+        <div class="toolbar" style="padding-top:16px">
+          <input class="input grow" id="sigSearch" type="search" placeholder="Search address, case number, parcel or zoning" aria-label="Search county signals">
+          <select class="input" id="sigType" aria-label="Item type"></select>
+          <select class="input" id="sigCounty" aria-label="County"></select>
+          <select class="input" id="sigSort" aria-label="Sort"><option value="signal">Strongest signal first</option><option value="date">Newest meeting first</option></select>
+        </div>
+        <ul class="contract-list" id="sigList"></ul>
       </section>
     </section>
 
@@ -761,15 +811,50 @@ function logActivity(t){activity.unshift({t,when:'Just now'});renderActivity()}
 function renderActivity(){$('#activityList').innerHTML=activity.slice(0,5).map(a=>`<li>${esc(a.t)}<time>${esc(a.when)}</time></li>`).join('')}
 /* Who owns the relationship with a named business, from the opportunity data. */
 function relationshipFor(name){const o=opps.find(x=>x.name===name);return o?{name,owner:o.owner}:null}
+function animateIn(el){if(!el)return;el.classList.remove('enter');void el.offsetWidth;el.classList.add('enter')}
 function rowKey(el,fn){el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})}
 
+const SIGNALS_SCRAPED_AT='2026-11-13T14:47:05-05:00';
+const countySignals=[{"county":"Burke","date":"2026-11-10","body":"","type":"rezoning","text":"Rezoning Parcels 062A-005 and 062A-005A from R1 to CG","from":"R1","to":"CG","acres":null,"units":null,"address":"","case":"","parcels":["062A-005","062A-005A"],"parties":[],"url":"https://www.burkecounty-ga.gov/Document Center/Agendas & Minutes/Board of Commissioners/2027/11-10-2026 Reg Mtg.pdf?t=202611090802270","doc":"agenda","conf":0.6,"review":false},{"county":"Burke","date":"2026-11-10","body":"","type":"annexation","text":"Consideration of Resolution Concerning the Proposed Annexation by the City of Hephzibah","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://www.burkecounty-ga.gov/Document Center/Agendas & Minutes/Board of Commissioners/2027/11-10-2026 Reg Mtg.pdf?t=202611090802270","doc":"agenda","conf":0.35,"review":true},{"county":"Burke","date":"2026-10-16","body":"","type":"annexation","text":"Presentation/Discussion by the City of Hephzibah Concerning Proposed Annexation into Burke County","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://www.burkecounty-ga.gov/Document Center/Agendas & Minutes/Board of Commissioners/2027/10-16-2026 Called Mtg.pdf?t=202610150924200","doc":"agenda","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"rezoning","text":"Proposed Development Schedule The following represents a general schedule for the proposed development: S-1 Rezoning Narrative Impact Community Church September 2026 Bluewater Engineering Services, LLC • P. O. Box 617 • Evans, GA. 30809 Ph:…","from":"","to":"","acres":12.17,"units":null,"address":"3894 Gordon Highway","case":"RZ26-10-02","parcels":[],"parties":["Impact Community Church","Bluewater Engineering Services, LLC"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.9,"review":false},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"rezoning","text":"RZ26-10-04, Rezoning from a split zoned P-1 (Professional) and C-2 (General Commercial) to P-1 (Professional), 436 Furys Ferry Road, Tax Map 082A Parcel 059B, 0.3 +/- acres, and currently zoned P-1 (Professional) and C-2 (General Commercial…","from":"","to":"","acres":0.3,"units":null,"address":"436 Furys Ferry Road","case":"RZ26-10-04","parcels":["Tax Map 082A Parcel 059B"],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13860,plainText=false)","doc":"agenda","conf":0.65,"review":false},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"variance","text":"Any variance recommended and/or authorized is to be set forth in writing in the minutes of the Planning Commission and the Board of Commissioners, as the case may be, with the reasons for which the departure was justified, and the condition…","from":"","to":"","acres":0.3,"units":null,"address":"436 Furys Ferry Road","case":"VA26-10-01","parcels":["Tax Map 082A Parcel ID 059B"],"parties":["Eric Clark"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":1.0,"review":false},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"rezoning","text":"RZ26-10-01, Rezoning from R-2 (Single Family Residential) to C-1 (Neighborhood Commercial), 4391 Hereford Farm Rd, Tax Map 072A Parcel 058, 0.79 +/- acres, and currently zoned R-2 (Single Family Residential).","from":"R-2","to":"C-1","acres":0.79,"units":null,"address":"4391 Hereford Farm Rd","case":"RZ26-10-01","parcels":["Tax Map 072A Parcel 058"],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13878,plainText=false)","doc":"agenda","conf":0.75,"review":false},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"site_plan","text":"No access to Hereford Farm Road is permitted via the existing residential driveway. An approved site plan shall be required and improvements installed, inspected and approved prior to use of the subject property. The new commercial driveway…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":["Hereford Farm"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.45,"review":true},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"rezoning","text":"364-5220 Fax: (706) 364-5221 S-1 Rezoning Narrative Impact Community Church September 2026 Bluewater Engineering Services, LLC • P. O. Box 617 • Evans, GA. 30809 Ph: 706.364.5220 • Fax: 706.364.5221 • Website: www.bluewaterengr.com Project …","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":["Bluewater Engineering Services, LLC","Impact Community Church"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"subdivision","text":"Background and General Information The site consists of a 50-acre parcel currently owned by Billy Williams. The parcel is identified as Columbia County Parcel # 043 130. Impact Community Church wishes to purchase and subdivide the lot to fa…","from":"","to":"","acres":21.78,"units":null,"address":"","case":"","parcels":[],"parties":["Impact Community Church","Bluewater Engineering Services, LLC"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.6,"review":false},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"rezoning","text":"Zoning and Land Use The site is currently zoned R-A. The property is bounded to the north by Gordon Hwy. On all other sides the parcel is bounded by zone R-A, except for one S-1 parcel. The church wishes to rezone “Lot A” as described in th…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.25,"review":true},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"variance","text":"The special circumstances or conditions are such that the strict application of the provisions of this chapter would deprive the applicant of any reasonable use of his land. Mere loss of value shall not justify a variance. There must be a d…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"variance","text":"If granted, the variance shall be in harmony with the general purposes and intent of this chapter and shall not be injurious to the neighborhood or detrimental to the public welfare. If granted with the proposed conditions, the request will…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"variance","text":"In reviewing the application for a variance, the burden of showing that the variance should be recommended and/or granted shall be upon the person applying for the variance. The applicant has provided sufficient information.","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-15","body":"Planning Commission","type":"variance","text":"When recommending a variance, the planning commission or the Board of Commissioners, as the case may be, when granting a variance, may establish reasonable conditions concerning the use of the property, and may establish an expiration date …","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13861,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"variance","text":"Rename the existing Beehive Drive to Willingham Drive and the existing Willingham Drive to Willingham Circle, subject to variances to Columbia County Code Sections 18- 236 Purpose and Administration, and 18-238 Renaming and Procedures","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13878,plainText=false)","doc":"agenda","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"rezoning","text":"RZ26-09-04, Rezoning from R-1 (Single Family Residential) to C-3 (Heavy Commercial), 5125 & 5147 Columbia Road, Tax Map 067 Parcel 104 & Tax Map 061 Parcel 018B, a combined 13.33 +/- acres, and currently zoned R-1 (Single Family Residential…","from":"R-1","to":"C-3","acres":13.33,"units":null,"address":"5147 Columbia Road","case":"RZ26-09-04","parcels":["Tax Map 067 Parcel 104","Tax Map 061 Parcel 018B"],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13879,plainText=false)","doc":"agenda_packet","conf":0.75,"review":false},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"site_plan","text":"Any outdoor lighting shall be shielded and directed away from adjacent residential property. A photometric plan and method of shielding shall be submitted at site plan review.","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13879,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"subdivision","text":"The developer shall submit to the agency during the plan review process, the proposed road names to be utilized within the subdivision or commercial development.","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13879,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"rezoning","text":"A minimum 10-foot landscape strip shall be planted along Hereford Farm Road. COMMITTEE RECOMMENDATION / MOTION: I make a motion to approve the request for the rezoning from R-2 to C-1 for property located at tax map 072A parcel 058 subject …","from":"R-2","to":"C-1","acres":null,"units":null,"address":"tax map 072A parcel 058 subject to the conditions enumerated in the October 1st, 2026 Plan","case":"","parcels":["tax map 072A parcel 058"],"parties":["Hereford Farm"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13879,plainText=false)","doc":"agenda_packet","conf":0.85,"review":false},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"site_plan","text":"Whether the zoning proposal is compatible with the purpose and intent of the Foundations for the Future Comprehensive Plan. The property is located within the Town Center Character Area on the Future Development plan; this character area in…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13879,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-10-20","body":"Board of Commission","type":"site_plan","text":"Proposed Development Schedule The following represents a general schedule for the proposed development: Project Milestone Date Anticipate Zoning Approval October 20, 2026 Submit Site Plan January 2027 Receive Site Plan Approval March 2027 B…","from":"","to":"","acres":null,"units":null,"address":"","case":"RZ26-10-03","parcels":[],"parties":["E. Bluewater Engineering Services, LLC"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13879,plainText=false)","doc":"agenda_packet","conf":0.7,"review":false},{"county":"Columbia","date":"2026-10-27","body":"Community and Emergency Services","type":"development_agreement","text":"This Agreement is subordinate in all respects to the Prime Lease. This Agreement is the “AUMC Financing Lease” described in (and as defined in) that certain Development Agreement among Lessor, Regents and the County dated as of July 18, 202…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13887,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-11-03","body":"Board of Commission","type":"variance","text":"VA26-09-01, Variance to Section 90-147(g)(10)(b)(2)(v) Use Provisions, 5549 Columbia Road, Tax Map 050 Parcel 002K, 2.65 +/- acres, and currently zoned C-C (Community Commercial) - Postponed from the September 15, 2026 meeting.","from":"","to":"","acres":2.65,"units":null,"address":"5549 Columbia Road","case":"VA26-09-01","parcels":["Tax Map 050 Parcel 002K"],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13916,plainText=false)","doc":"agenda","conf":0.75,"review":false},{"county":"Columbia","date":"2026-11-03","body":"Board of Commission","type":"variance","text":"In reviewing an application for a variance, the burden of showing that the variance should be recommended and/or granted shall be upon the person applying for the variance. The applicant has provided insufficient information for the varianc…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13917,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-11-03","body":"Board of Commission","type":"variance","text":"When recommending a variance, the planning commission, or board of commissioners, when granting a variance, may establish reasonable conditions concerning the use of the property, and may establish an expiration date for such variances. So …","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13917,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"variance","text":"Any variance recommended and/or authorized is to be set forth in writing in the minutes of the Planning Commission and the Board of Commissioners, as the case may be, with the reasons for which the departure was justified, and the condition…","from":"","to":"","acres":null,"units":null,"address":"771 Broad Street","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":0.5,"review":true},{"county":"Columbia","date":"2026-11-03","body":"Board of Commission","type":"site_plan","text":"DILL 2026-06-02 GA COA NO. PEF005804 SOUTHEAST BUSINESS UNIT 26004380 CIRCLE K STORE SITE PLAN COLUMBIA RD AND WILLIAM FEW PKWY (NEC), COLUMBIA COUNTY, GA V ZONING: C-C (COMMERCIAL) T 5,200 SQ. FT S V2.0WB-50 ZONING: C-C (COMMERCIAL) ZONING…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13917,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-11-03","body":"Board of Commission","type":"site_plan","text":"DILL 2026-06-02 GA COA NO. PEF005804 SOUTHEAST BUSINESS UNIT 26004380 CIRCLE K - COLUMBIA RD & WILLIAM FEW PKWY (NEC) EVANS, GA CIRCLE K STORE SITE PLAN COLUMBIA RD AND WILLIAM FEW PKWY (NEC), COLUMBIA COUNTY, GA N GRID NORTHEAST ZONE ATLAN…","from":"","to":"","acres":1.24,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13917,plainText=false)","doc":"agenda_packet","conf":0.5,"review":true},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"site_plan","text":"Proposed Development Schedule The following represents a general schedule for the proposed development: Project Milestone Date Anticipate Zoning Approval November 2026 Submit Site Plan January 2027 Receive Site Plan Approval March 2027 Begi…","from":"","to":"","acres":13.88,"units":null,"address":"3894 Gordon Highway","case":"RZ26-11-01","parcels":[],"parties":["Impact Community Church"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":1.0,"review":false},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"site_plan","text":"722-7488 mail@dickinsonarchitects.com www.dickinsonarchitects.com Architecture Interior Design Planning dickinson A R C H I T E C T S 2 3 4 51 B C A D 2 3 4 51 A100 ARCHITECTURAL SITE PLAN 26049 PRATHER PLACE RETAIL 0' 5' 10' 40' 80' SCALE:…","from":"","to":"","acres":1.37,"units":null,"address":"601 Ponder Place","case":"VA26-11-01","parcels":["Tax Map 073 Parcel 366C"],"parties":["Greenpoint Capital, LLLP"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":1.0,"review":false},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"variance","text":"Per 90-139 Buffers – request a variance from 40’ to 22’ 9” at closest point of building to zone and 26’ 9” at furthest point of building to zone. Background: Building was constructed to align with an existing building next to it that also r…","from":"","to":"","acres":47.0,"units":null,"address":"4151 Washington Road","case":"VA26-11-02","parcels":["Tax Map 079 Parcel 100"],"parties":["Club Car, LLC"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":1.0,"review":false},{"county":"Columbia","date":"2026-11-17","body":"Board of Commission","type":"subdivision","text":"Site plan must include location of on-site sewage system and replacement area. Planning: Prior to approval of a site plan for the subject property, a copy of the approved and filed subdivision plat shall be provided to Planning. COMMITTEE R…","from":"","to":"","acres":null,"units":null,"address":"tax map 043 portion of parcel 130 subject to the conditions enumerated in the November 5,","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13944,plainText=false)","doc":"agenda_packet","conf":0.5,"review":true},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"variance","text":"was approved to r emove the maximum front setback from the shared service drive only. The maximum setback was kept in place along both North Belair and Ponder Place with that variance. As noted, the property is in the Evans Town Center Over…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"variance","text":"Variance only applies to the buildings labeled Constructed Building and Exist Building on the site plan prepared by James G. Swift & Associates dated August 26th, 2026. Any future buildings or expansion of existing buildings that meet the t…","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":["James G. Swift & Associates"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":0.45,"review":true},{"county":"Columbia","date":"2026-11-17","body":"Board of Commission","type":"site_plan","text":"No lighting is permitted on the rear of the constructed building and if the existing building has existing lighting a photometric plan showing footcandle readings of 0 at the residential property line will be required to be submitted with t…","from":"","to":"","acres":null,"units":null,"address":"tax map 079 parcel 100 subject to the conditions enumerated in the November 5, 2026 Planni","case":"","parcels":["tax map 079 parcel 100"],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13944,plainText=false)","doc":"agenda_packet","conf":0.75,"review":false},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"variance","text":"Per 90-98 Setbacks – request a variance from 30’ to 22’ 9” at closest point of building to zone and 26’ 9” at furthest point of building to zone.","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":0.35,"review":true},{"county":"Columbia","date":"2026-11-05","body":"Planning Commission","type":"variance","text":"Any variance recommended and/or authorized is to be set forth in writing in the minutes of the Planning Commission and the Board of Commissioners, as the case may be, with the reasons for which the departure was justified, and the condition…","from":"","to":"","acres":1.2,"units":null,"address":"3696 Washington Road","case":"VA26-11-03","parcels":["Tax Map 082E Parcel 019A"],"parties":["Scott Peebles"],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13909,plainText=false)","doc":"agenda_packet","conf":1.0,"review":false},{"county":"Columbia","date":"2026-11-10","body":"Development and Engineering Services","type":"variance","text":"Ancillary Dwelling Variance for Tax Map 040 Parcel 147","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":["Tax Map 040 Parcel 147"],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13927,plainText=false)","doc":"agenda","conf":0.6,"review":false},{"county":"Columbia","date":"2026-11-10","body":"Development and Engineering Services","type":"variance","text":"Ancillary Dwelling Variance for Tax Map 009 Parcel 008","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":["Tax Map 009 Parcel 008"],"parties":[],"url":"https://columbiacoga.api.civicclerk.com/v1/Meetings/GetMeetingFileStream(fileId=13927,plainText=false)","doc":"agenda","conf":0.6,"review":false},{"county":"Morgan","date":"2026-11-03","body":"Board of Commissioners & Bldg. Authority","type":"moratorium","text":"Extension of the Planned Unit Development Moratorium.","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://www.morgancountyga.gov/AgendaCenter/ViewFile/Agenda/_11032026-885","doc":"agenda","conf":0.35,"review":true},{"county":"Morgan","date":"2026-11-05","body":"Planning Commission","type":"text_amendment","text":"Kevin Courchaine, on behalf of Burnt Pine Farm, LLC, Burnt Pine Eat, LLC and GA Atlantic Development, is requesting a text amendment to the Morgan County Zoning Ordinance to Articles 3, 4 and 7.","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":["Kevin Courchaine","Burnt Pine Farm, LLC"],"url":"https://www.morgancountyga.gov/AgendaCenter/ViewFile/Agenda/_11052026-883","doc":"agenda","conf":0.6,"review":false},{"county":"Morgan","date":"2026-11-05","body":"Planning Commission","type":"text_amendment","text":"Morgan County Planning and Development is requesting a text amendment to Chapter 7.26 Telecommunications Towers, of the Morgan County Zoning Ordinance.","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://www.morgancountyga.gov/AgendaCenter/ViewFile/Agenda/_11052026-883","doc":"agenda","conf":0.35,"review":true},{"county":"Morgan","date":"2026-11-05","body":"Planning Commission","type":"text_amendment","text":"Morgan County Planning and Development is requesting a text amendment to the Morgan County Development Regulations to modify language and organization of the development regulations. WITHDRAWN ADJOURNMENT","from":"","to":"","acres":null,"units":null,"address":"","case":"","parcels":[],"parties":[],"url":"https://www.morgancountyga.gov/AgendaCenter/ViewFile/Agenda/_11052026-883","doc":"agenda","conf":0.35,"review":true}];
+
+/* ---------- County signals (real scraped agenda items) ---------- */
+const SIG_TYPES={development_agreement:['Development agreement',8,'tag-red'],annexation:['Annexation',7,'tag-red'],rezoning:['Rezoning',6,'tag-amber'],subdivision:['Subdivision',5,'tag-amber'],moratorium:['Moratorium',4,'tag-plain'],site_plan:['Site plan',3,'tag-teal'],text_amendment:['Code change',2,'tag-plain'],variance:['Variance',1,'tag-plain']};
+function initSignals(){
+  const count=t=>countySignals.filter(s=>s.type===t).length;
+  $('#sigType').innerHTML=`<option value="dev">Development signals (no variances)</option><option value="all">All item types</option>`+Object.entries(SIG_TYPES).filter(([t])=>count(t)).map(([t,[n]])=>`<option value="${t}">${esc(n)} (${count(t)})</option>`).join('');
+  const counties=[...new Set(countySignals.map(s=>s.county))].sort();
+  $('#sigCounty').innerHTML='<option value="all">All counties</option>'+counties.map(c=>`<option value="${esc(c)}">${esc(c)} (${countySignals.filter(s=>s.county===c).length})</option>`).join('');
+  const when=new Date(SIGNALS_SCRAPED_AT).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+  $('#sigNotice').textContent=`${countySignals.length} agenda items from ${counties.length} counties (${counties.join(', ')}), scraped ${when}. Each item links to the county's own document. Items marked "Check details" were extracted with low confidence.`;
+  ['#sigSearch','#sigType','#sigCounty','#sigSort'].forEach(s=>$(s).addEventListener(s==='#sigSearch'?'input':'change',renderSignals));
+  renderSignals();
+}
+function renderSignals(){
+  const q=$('#sigSearch').value.trim().toLowerCase(),t=$('#sigType').value,c=$('#sigCounty').value;
+  const list=countySignals.filter(s=>(t==='all'||(t==='dev'?s.type!=='variance':s.type===t))&&(c==='all'||s.county===c)
+    &&(!q||`${s.text} ${s.address} ${s.case} ${s.parcels.join(' ')} ${s.from} ${s.to} ${s.parties.join(' ')} ${s.county}`.toLowerCase().includes(q)));
+  const w=s=>(s.review?0:100)+(s.from&&s.to?20:0)+(s.acres||s.address?5:0)+(SIG_TYPES[s.type]||['',0])[1];
+  list.sort((a,b)=>$('#sigSort').value==='date'?b.date.localeCompare(a.date):(w(b)-w(a))||b.date.localeCompare(a.date));
+  $('#sigList').innerHTML=list.length?list.map(s=>{const [label,,cls]=SIG_TYPES[s.type]||[s.type,0,'tag-plain'];const i=countySignals.indexOf(s);
+    const facts=[s.from&&s.to?`${s.from} → ${s.to}`:'',s.acres?`${s.acres} acres`:'',s.units?`${s.units} units`:'',s.address,s.case?`Case ${s.case}`:'',s.parcels.length?`Parcel ${s.parcels.join(', ')}`:''].filter(Boolean);
+    return `<li class="contract">
+    <div><h3 style="font:600 15px/1.4 var(--sans)">${esc(s.text)}</h3><div class="cell-sub">${esc(s.county)} County${s.body?`, ${esc(s.body)}`:''}. Meeting ${esc(fmtDate(s.date,{month:'short',day:'numeric',year:'numeric'}))}.</div>
+      ${facts.length?`<div class="cell-sub" style="margin-top:6px;color:var(--ink)">${facts.map(esc).join(' · ')}</div>`:''}
+      <div class="source">Source: <a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.county)} County ${s.doc==='agenda_packet'?'agenda packet':esc(s.doc)} (PDF)</a></div></div>
+    <div class="dev"><div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tag ${cls}">${esc(label)}</span>${s.review?' <span class="tag tag-plain" title="Low-confidence extraction">Check details</span>':''}</div>${s.parties.length?`<div style="margin-top:12px"><b>${esc(s.parties[0])}</b><span>Named in the item</span></div>`:''}</div>
+    <div class="contract-actions">${s.tracked?'<button class="btn btn-quiet btn-small" disabled>Tracking</button>':`<button class="btn btn-primary btn-small" data-track="${i}">Track as lead</button>`}<a class="btn btn-quiet btn-small" href="${esc(s.url)}" target="_blank" rel="noopener">Open agenda</a></div></li>`}).join('')
+    :`<li class="empty">No agenda items match. Try another type or county.</li>`;
+  $('#sigList').querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>{const s=countySignals[+b.dataset.track];s.tracked=true;
+    logActivity(`Jordan Davis started tracking a ${(SIG_TYPES[s.type]||[s.type])[0].toLowerCase()} in ${s.county} County.`);renderSignals();toast('Added to your tracked leads')});
+}
+
 /* ---------- Routing ---------- */
-const PAGES={overview:'Overview',contracts:'Contract signals',events:'Where to be'};
+const PAGES={overview:'Overview',contracts:'Contract signals',signals:'County signals',events:'Where to be'};
 function route(){
   let id=location.hash.slice(1);
   if(id==='where-to-be')id='events';
   if(!PAGES[id])id='overview';
-  document.querySelectorAll('[data-page]').forEach(p=>p.hidden=p.dataset.page!==id);
+  document.querySelectorAll('[data-page]').forEach(p=>{const show=p.dataset.page===id;if(show&&p.hidden)animateIn(p);p.hidden=!show});
   document.querySelectorAll('[data-nav]').forEach(a=>{if(a.dataset.nav===id)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   $('#crumb').textContent=PAGES[id];
   if(id==='events')renderEvents();
@@ -952,6 +1037,7 @@ function renderEvents(){
 function setView(v){
   view=v;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
   $('#evList').hidden=v!=='list';$('#evCalendar').hidden=v!=='calendar';$('#evMap').hidden=v!=='map';
+  animateIn($({list:'#evList',calendar:'#evCalendar',map:'#evMap'}[v]));
   if(v==='calendar')renderCalendar();if(v==='map'){mapScale=1;renderMap()}
 }
 function coverageTag(e){return e.assigned?`<span class="tag tag-green">Covered by ${esc(e.assigned)}</span>`:e.score>=70?'<span class="tag tag-red">Needs a banker</span>':''}
@@ -1223,7 +1309,163 @@ function renderNotes(e){$('#eNotes').innerHTML=e.notes.map(n=>`<li><b>${esc(n.co
 ['#oppSearch','#oppUrgency','#oppMarket'].forEach(s=>$(s).addEventListener(s==='#oppSearch'?'input':'change',renderOpps));
 ['#conSearch','#conStatus','#conCounty'].forEach(s=>$(s).addEventListener(s==='#conSearch'?'input':'change',renderContracts));
 $('#topSearch').addEventListener('input',e=>{if(location.hash&&location.hash!=='#overview')location.hash='overview';$('#oppSearch').value=e.target.value;renderOpps()});
-renderBrief();renderOpps();renderSide();renderActivity();renderContracts();initEventFilters();renderEvents();route();
+initSignals();renderBrief();renderOpps();renderSide();renderActivity();renderContracts();initEventFilters();renderEvents();route();
+
+/* ---------- Walkthrough ---------- */
+const Tour=(()=>{
+  const TOP_EVENT=0;
+  const steps=[
+    {page:'overview',center:true,title:'BankSouth Opportunity Hub',
+     body:'One place for relationship bankers to see who to call, which public projects to watch, and where to be in person. This walkthrough takes about two minutes.'},
+    {page:'overview',target:'.brief',title:'Start with the day’s brief',
+     body:'The hub reads the pipeline and writes one sentence: what closes soon, and what still has no banker.'},
+    {page:'overview',target:'.figures',title:'The numbers that matter',
+     body:'Open opportunities, what expires in the next 30 days, the estimated pipeline, and how much of it we’ve already contacted.'},
+    {page:'overview',target:'.overview-grid > .panel',title:'Priority opportunities',
+     body:'Sorted by urgency. Search, or filter by urgency and market, then open any row for the full story.'},
+    {page:'overview',target:'#drawer',run:()=>openDrawer(0),title:'Why it surfaced',
+     body:'Every opportunity shows its score, the evidence behind it, a recommended next step, and who owns the relationship.'},
+    {page:'overview',target:'#campaignModal .modal-card',run:()=>openCampaign(0),title:'Campaign brief',
+     body:'Turn an opportunity into outreach. Verified facts are kept apart from hypotheses, so nobody presents a guess as fact.'},
+    {page:'contracts',target:'#conList',title:'Contract signals',
+     body:'Public project and contract records, each with its source and the date we last checked it. Verified records become opportunities a banker owns.'},
+    {page:'events',target:'.filterbar',run:()=>setView('list'),title:'Where to be',
+     body:'Meetings and events where future clients will be in the room. Filter by distance from a branch town, date and event type.'},
+    {page:'events',target:'#evList .event',run:()=>setView('list'),title:'Ranked by relevance',
+     body:'Each event is scored out of 100. High-value events with no banker covering them are flagged in red.'},
+    {page:'events',target:'#evCalendar .month',run:()=>setView('calendar'),title:'Calendar view',
+     body:'The same events on a month grid, so coverage can be planned week by week.'},
+    {page:'events',target:'#evMap',run:()=>setView('map'),title:'Map view',
+     body:'Events placed by real location around the selected town, with the search radius drawn to scale. Red rings need a banker.'},
+    {page:'events',target:'#eventModal .modal-card',run:()=>{setView('list');openEvent(TOP_EVENT)},title:'A score you can explain',
+     body:'Relevance breaks into five parts: connected leads, event type, developer attendance, distance and cost. Prep notes tell whoever attends who to look for.'},
+    {page:'events',target:'#eventModal .inline-form',keep:true,run:()=>{if($('#eventModal').hidden)openEvent(TOP_EVENT);const tok=seq;setTimeout(()=>{if(active&&tok===seq)demoAssign()},900)},title:'Assign coverage',
+     body:'Assigning a banker clears the “Needs a banker” flag everywhere: in the list, on the calendar and on the map.'},
+    {page:'events',target:`#evList [data-e="${TOP_EVENT}"]`,run:()=>{demoAssign();closeAll(true);setView('list')},title:'Coverage updated',
+     body:'Greene County Planning Commission now shows who is covering it, and the count of events needing a banker went down by one.'},
+    {page:'overview',center:true,title:'Where the data comes from',
+     body:'Contract signals and events are built to be fed by the county scraper, which reads commission agendas, public hearings and development postings from 30 county websites across Middle and East Georgia. Everything shown today is sample data.'}
+  ];
+  const AUTO_MS=8000,ASSIGN_STEP=steps.findIndex(s=>s.title==='Assign coverage');
+  let i=0,active=false,auto=false,timer=null,raf=null,assignedByTour=false,tourLog=null,seq=0,saved=null;
+  let block,spot,card;
+
+  function build(){
+    block=document.createElement('div');block.className='tour-block';
+    spot=document.createElement('div');spot.className='tour-spot';
+    card=document.createElement('div');card.className='tour-card';card.setAttribute('role','dialog');card.setAttribute('aria-label','Guided walkthrough');card.setAttribute('aria-live','polite');
+    document.body.append(block,spot,card);
+  }
+  function start(){
+    if(active)return;
+    closeAll(true);
+    saved={f:readFilters(),sort:$('#evSort').value,view,assigned:events[TOP_EVENT].assigned};
+    events[TOP_EVENT].assigned='';$('#evSort').value='score';applyFilters(DEFAULTS);setView('list');
+    if(!block)build();
+    active=true;i=0;block.hidden=spot.hidden=card.hidden=false;
+    document.addEventListener('keydown',keys,true);
+    show();loop();
+  }
+  function end(){
+    active=false;stopAuto();cancelAnimationFrame(raf);
+    document.removeEventListener('keydown',keys,true);
+    block.hidden=spot.hidden=card.hidden=true;
+    seq++;undoAssign();closeAll(true);
+    if(saved){events[TOP_EVENT].assigned=saved.assigned;$('#evSort').value=saved.sort;applyFilters(saved.f);setView(saved.view);saved=null}
+    if(location.hash!=='#overview')location.hash='overview';else route();
+  }
+  function demoAssign(){
+    if(assignedByTour)return;current.event=TOP_EVENT;$('#eBanker').value='Jordan Davis';assignEvent();assignedByTour=true;tourLog=activity[0];
+  }
+  /* Take back the demo assignment, including its line in Recent activity. */
+  function undoAssign(){
+    if(!assignedByTour)return;assignedByTour=false;events[TOP_EVENT].assigned='';
+    const k=activity.indexOf(tourLog);if(k>=0)activity.splice(k,1);tourLog=null;renderActivity();renderEvents();
+  }
+  function go(n){if(n<0||n>=steps.length)return;i=n;show()}
+  function next(){if(i<steps.length-1)go(i+1);else end()}
+  function back(){go(i-1)}
+  function show(){
+    const s=steps[i],tok=++seq;
+    card.classList.add('swap');
+    if(i<ASSIGN_STEP)undoAssign();
+    if(!s.keep)closeAll(true);
+    if(location.hash.slice(1)!==s.page)location.hash=s.page;
+    setTimeout(()=>{
+      if(!active||tok!==seq)return;
+      if(s.run)s.run();
+      setTimeout(()=>{
+        if(!active||tok!==seq)return;
+        const el=s.target&&$(s.target);
+        if(el)el.scrollIntoView({block:innerWidth<=760?'start':'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+        render(s);
+        card.classList.remove('swap');
+        if(auto)arm();
+      },s.run?380:220);
+    },60);
+  }
+  function render(s){
+    const last=i===steps.length-1,first=i===0;
+    card.classList.toggle('center',!!s.center);
+    card.innerHTML=s.center
+      ?`<button class="tour-x" aria-label="End walkthrough">×</button><div class="tour-rule"></div><h2>${s.title}</h2><p class="tour-body">${s.body}</p>
+        <div class="tour-nav" style="margin-top:26px">${first
+          ?`<button class="btn btn-primary" data-a="next">Start walkthrough</button><button class="btn btn-quiet" data-a="end">Explore on my own</button><span class="spacer"></span><button class="btn btn-quiet btn-small" data-a="auto">Autoplay</button>`
+          :`<button class="btn btn-primary" data-a="end">Finish</button><button class="btn btn-quiet" data-a="restart">Watch again</button><span class="spacer"></span><button class="btn btn-quiet btn-small" data-a="back">Back</button>`}</div>
+        <p class="tour-keys">Use the arrow keys to move, space to autoplay, Esc to leave.</p>`
+      :`<button class="tour-x" aria-label="End walkthrough">×</button><p class="tour-step">Step ${i} of ${steps.length-2}</p><h2>${s.title}</h2><p class="tour-body">${s.body}</p>
+        <div class="tour-progress"><i id="tourBar"></i></div>
+        <div class="tour-nav"><button class="btn btn-quiet btn-small" data-a="back">Back</button><button class="btn btn-quiet btn-small" data-a="auto">${auto?'Pause':'Autoplay'}</button><span class="spacer"></span><button class="btn btn-primary btn-small" data-a="next">${i===steps.length-2?'Finish tour':'Next'}</button></div>`;
+    card.querySelector('.tour-x').onclick=end;
+    card.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({next,back,end,restart:()=>go(0),auto:toggleAuto}[b.dataset.a])());
+    const focus=card.querySelector('[data-a=next]')||card.querySelector('[data-a=end]');if(focus)focus.focus({preventScroll:true});
+  }
+  function place(){
+    const s=steps[i],vw=innerWidth,vh=innerHeight,W=card.offsetWidth,H=card.offsetHeight,g=16;
+    if(s.center){
+      spot.classList.add('full');Object.assign(spot.style,{left:vw/2+'px',top:vh/2+'px',width:'0px',height:'0px'});
+      card.style.left=(vw-W)/2+'px';card.style.top=Math.max(g,(vh-H)/2)+'px';return;
+    }
+    spot.classList.remove('full');
+    const el=$(s.target);if(!el)return;
+    const r=el.getBoundingClientRect(),p=8;
+    const floor=vw<=760?card.getBoundingClientRect().top-10:vh-6;
+    const t=Math.max(r.top-p,6),l=Math.max(r.left-p,6),b=Math.min(r.bottom+p,floor),rt=Math.min(r.right+p,vw-6);
+    Object.assign(spot.style,{left:l+'px',top:t+'px',width:Math.max(0,rt-l)+'px',height:Math.max(0,b-t)+'px'});
+    if(vw<=760)return;
+    const clampY=y=>Math.min(Math.max(g,y),vh-H-g),clampX=x=>Math.min(Math.max(g,x),vw-W-g);
+    let x,y;
+    if(rt+g+W<=vw-g){x=rt+g;y=clampY(t)}
+    else if(l-g-W>=g){x=l-g-W;y=clampY(t)}
+    else if(b+g+H<=vh-g){x=clampX(l);y=b+g}
+    else if(t-g-H>=g){x=clampX(l);y=t-g-H}
+    else{x=vw-W-g;y=vh-H-g}
+    card.style.left=x+'px';card.style.top=y+'px';
+  }
+  function loop(){if(!active)return;place();raf=requestAnimationFrame(loop)}
+  function arm(){
+    clearTimeout(timer);const bar=$('#tourBar');
+    if(bar){bar.style.transition='none';bar.style.width='0';void bar.offsetWidth;bar.style.transition=`width ${AUTO_MS}ms linear`;bar.style.width='100%'}
+    timer=setTimeout(()=>{if(active&&auto){if(i<steps.length-1)next();else stopAuto()}},AUTO_MS);
+  }
+  function stopAuto(){auto=false;clearTimeout(timer);const bar=$('#tourBar');if(bar){bar.style.transition='none';bar.style.width='0'}}
+  function toggleAuto(){
+    if(auto){stopAuto();render(steps[i]);return}
+    auto=true;
+    if(i===0)next();else{render(steps[i]);arm()}
+  }
+  function keys(e){
+    if(!active)return;
+    const tag=(e.target.tagName||'').toLowerCase();
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();end()}
+    else if(e.key==='ArrowRight'||(e.key==='Enter'&&tag!=='button')){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'){e.preventDefault();back()}
+    else if(e.key===' '&&tag!=='button'){e.preventDefault();toggleAuto()}
+    else if(e.key==='Tab'){const f=[...card.querySelectorAll('button')];if(!f.length)return;const k=f.indexOf(document.activeElement);e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus()}
+  }
+  return{start,end};
+})();
+if(/[?&]demo\b/.test(location.search))Tour.start();
 </script>
 </body>
 </html>
