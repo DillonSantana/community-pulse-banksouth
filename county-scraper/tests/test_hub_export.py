@@ -32,6 +32,28 @@ class Times(unittest.TestCase):
         self.assertEqual(find_time("20261117T230000Z"), "6:00 PM")        # iCal, UTC
         self.assertEqual(find_time("2026-11-17T00:00:00"), "")            # no time given
 
+    def test_mec_time_comes_from_event_page(self):
+        # MEC's JSON-LD says 05:00-05:00 for a 10 AM meeting; the page shows the truth.
+        from scraper.adapters.base import Context
+        from scraper.adapters.wordpress import events_pages
+        listing = ("<link href='/wp-content/plugins/modern-events-calendar-lite/x.css'>"
+                   '<script type="application/ld+json">{"@type":"Event","name":"Pulaski County Commissioner Meeting",'
+                   '"startDate":"2026-12-14T05:00:00-05:00","url":"https://x/ev/1"}</script>'
+                   '<script type="application/ld+json">{"@type":"Event","name":"Holiday",'
+                   '"startDate":"2026-12-24","url":"https://x/ev/2"}</script>')
+        pages = {"https://x/events": listing,
+                 "https://x/ev/1": '<div class="mec-single-event-time"><dd>10:00 am - 11:00 am</dd></div>'}
+
+        class FakeClient:
+            def text(self, url):
+                return pages[url]
+
+        ctx = Context(client=FakeClient(), county="Pulaski", region="R",
+                      start=date(2026, 11, 1), end=date(2027, 2, 1))
+        evs = {e.title: e.event_time for e in events_pages(ctx, ["https://x/events"])}
+        self.assertEqual(evs["Pulaski County Commissioner Meeting"], "10:00 AM")
+        self.assertEqual(evs["Holiday"], "")
+
     def test_civicclerk_wall_time(self):
         # CivicClerk sends local times labeled Z; the adapter strips the offset first.
         from scraper.dates import parse_iso, strip_offset
