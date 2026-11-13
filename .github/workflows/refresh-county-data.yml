@@ -1,7 +1,8 @@
 # Daily refresh of the county meeting data that feeds the hub's "Where to be" calendar.
 #
 # Runs county-scraper against all configured county websites, then commits
-# data/county-events.js when the meetings changed. The Lead Finder handoff JSONL,
+# data/county-events.js when the meetings changed, and data/refresh-status.js (the time
+# shown bottom-left in the hub) on every successful run. The Lead Finder handoff JSONL,
 # the digest and the CSV are attached to each run as a downloadable artifact.
 # Once a month (the 18th, after Zillow publishes) it also refreshes the Housing
 # market page's data/housing.js from Zillow Research's public files.
@@ -70,6 +71,15 @@ jobs:
             echo "Not housing day (runs on the 18th)."
           fi
 
+      # The hub's bottom-left "Public data refreshed ..." label reads this file, so it is
+      # written on every successful run, whether or not any meeting changed.
+      - name: Stamp the refresh time
+        working-directory: .
+        run: |
+          printf '// Written by the daily refresh job. Do not edit by hand.\nwindow.DATA_REFRESH = {"checked_at": "%s", "run": "%s"};\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" > data/refresh-status.js
+
       - name: Save scraper memory
         if: always()
         uses: actions/cache/save@v4
@@ -90,7 +100,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Commit hub data if it changed
+      - name: Commit hub data and the refresh time
         working-directory: .
         run: |
           # Ignore the generated-at timestamp lines; commit only real changes.
@@ -98,13 +108,14 @@ jobs:
             echo "No meeting changes today."
             git checkout -- data/county-events.js
           fi
-          if git diff --quiet -- data/county-events.js data/housing.js; then
+          git add -N data/refresh-status.js
+          if git diff --quiet -- data/county-events.js data/housing.js data/refresh-status.js; then
             echo "Nothing to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add data/county-events.js data/housing.js
+          git add data/county-events.js data/housing.js data/refresh-status.js
           git commit -m "Refresh hub data from county websites and public records ($(date -u +%Y-%m-%d))"
           # Someone may have merged to main while the scrape ran.
           git pull --rebase origin "${GITHUB_REF_NAME}"

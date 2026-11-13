@@ -515,7 +515,7 @@ tbody tr:last-child td{border-bottom:0}
       <button type="button" onclick="openCampaign()">Campaign brief</button>
       <button type="button" class="tour-btn" onclick="Tour.start()">Walkthrough</button>
     </nav>
-    <div class="rail-foot">Data refreshed 18 minutes ago<br>Sample data for demonstration</div>
+    <div class="rail-foot"><span id="refreshLabel">Public data refreshes daily</span><br>Opportunities are sample data</div>
   </aside>
 
   <div class="main">
@@ -846,6 +846,7 @@ tbody tr:last-child td{border-bottom:0}
 <!-- Upcoming public meetings from county websites, written by county-scraper (python -m scraper run). -->
 <script src="data/county-events.js"></script>
 <script src="data/housing.js"></script>
+<script src="data/refresh-status.js"></script>
 <script>
 /* ---------- Sample data (anchored to 13 Nov 2026) ---------- */
 const TODAY = new Date('2026-11-13T12:00:00');
@@ -1788,6 +1789,26 @@ function renderHousingChart(){
   box.onpointerleave=hide;
 }
 initHousing();
+
+/* ---------- Bottom-left refresh label: when the daily job last pulled the public data ---------- */
+function refreshedAt(){
+  const stamps=[window.DATA_REFRESH&&window.DATA_REFRESH.checked_at,window.COUNTY_EVENTS_GENERATED,window.HOUSING_SNAPSHOT&&window.HOUSING_SNAPSHOT.generated_at]
+    .map(t=>t?new Date(t).getTime():NaN).filter(t=>!isNaN(t));
+  return stamps.length?Math.max(...stamps):null;
+}
+function agoText(ms){
+  const min=Math.floor(ms/60000),hr=Math.floor(min/60),day=Math.floor(hr/24);
+  if(min<1)return 'just now';
+  if(min<60)return `${min} ${min===1?'minute':'minutes'} ago`;
+  if(hr<24)return `${hr} ${hr===1?'hour':'hours'} ago`;
+  return day===1?'yesterday':`${day} days ago`;
+}
+function renderRefreshLabel(){
+  const el=$('#refreshLabel'),t=refreshedAt();if(!el||t===null)return;
+  el.textContent=`Public data refreshed ${agoText(Math.max(0,Date.now()-t))}`;
+  el.title=`Last refreshed ${new Date(t).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}. The county and housing data is pulled again every morning.`;
+}
+renderRefreshLabel();setInterval(renderRefreshLabel,60000);
 
 /* ---------- Walkthrough ---------- */
 const Tour=(()=>{
