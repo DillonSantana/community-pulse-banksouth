@@ -9,7 +9,7 @@ the top of a digest instead of 30 websites.
 ## Quick start
 
 ```bash
-cd ~/Downloads/banksouth-scraper
+cd community-pulse-banksouth/county-scraper
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 export COUNTY_SCRAPER_CONTACT="you@example.com"   # put in the user agent, per the handoff
 .venv/bin/python -m scraper run                     # digest + Lead Finder JSONL
@@ -175,7 +175,7 @@ Daily is enough (the handoff notes that P&Z agendas post about a week ahead). Wi
 cron (`crontab -e`):
 
 ```
-0 6 * * * cd $HOME/Downloads/banksouth-scraper && COUNTY_SCRAPER_CONTACT=you@example.com .venv/bin/python -m scraper run >> data/cron.log 2>&1
+0 6 * * * cd /path/to/community-pulse-banksouth/county-scraper && COUNTY_SCRAPER_CONTACT=you@example.com .venv/bin/python -m scraper run >> data/cron.log 2>&1
 ```
 
 `county_sources.csv` is the original research map of each county's site and platform.

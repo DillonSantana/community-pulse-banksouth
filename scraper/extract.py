@@ -59,11 +59,12 @@ DATE_LIKE = re.compile(r"^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}$")
 ID_TOKEN = re.compile(r"(?<![\w-])(?=[A-Z0-9.-]*\d)[A-Z0-9]{1,6}(?:[-.][A-Z0-9]{1,6}){1,6}(?![\w-])")
 PARCEL_KEY = re.compile(r"\b(?:tax\s+)?(?:parcels?|map\s*(?:&|and|/)\s*parcel|tax\s*map|PIN|"
                         r"tax\s*(?:parcel\s*)?id|parcel\s*(?:no\.?|number|#|id))\b[\s#:.]*", re.I)
-MAP_PARCEL = re.compile(r"\b(?:Tax\s+)?Map\s+([A-Z0-9-]+)\s*,?\s*(?:Parcel|Lot)\s+([A-Z0-9-]+)", re.I)
+MAP_PARCEL = re.compile(r"\b(?:Tax\s+)?Map\s+([A-Z0-9-]*\d[A-Z0-9-]*)\s*,?\s*(?:Parcel|Lot)\s+(?:ID|No\.?|#)?\s*"
+                        r"([A-Z0-9-]*\d[A-Z0-9-]*)\b", re.I)
 CASE_NO = re.compile(
     r"(?:\b(?:case|application|petition|file|docket)\s*(?:no\.?|number|#)?\s*:?\s*|#\s*)"
-    r"([A-Z]{1,5}[- ]?\d{2,4}[-‐]\d{1,5}[A-Z]?)"
-    r"|\b((?:RZ|REZ|Z|V|VAR|SUP|CU|CUP|PP|FP|AX|ANX|SP|TA|ZA|P)[- ]?\d{2,4}-\d{1,5})\b", re.I)
+    r"([A-Z]{1,5}[- ]?\d{2,4}(?:[-‐]\d{1,5}){1,2}[A-Z]?)"
+    r"|\b((?:RZ|REZ|Z|V|VA|VAR|SUP|CU|CUP|PP|FP|AX|ANX|SP|TA|ZA|P)[- ]?\d{2,4}(?:-\d{1,5}){1,2})\b", re.I)
 ACRES = re.compile(r"(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(?:\+/-|±|\+/−|\(\+/-\))?\s*"
                    r"(?:acres?|ac\.)(?![a-z])", re.I)
 UNITS = re.compile(r"(\d[\d,]*)\s+(?:residential\s+)?(?:lots|dwellings?|dwelling units|units|homes|"
@@ -90,7 +91,27 @@ NOT_A_PARTY = re.compile(r"\b(County|City of|Department|Board|Commission|Plannin
                          r"Authority|Georgia Power|State of|Ordinance|Regulations|Planned Unit|"
                          r"Copyright|Permission|Consent|Provided|Developer shall)\b", re.I)
 GENERIC_LEAD = {"the", "a", "an", "planned", "unit", "residential", "commercial", "new", "this",
-                "said", "such", "any", "all", "development", "construction"}
+                "said", "such", "any", "all", "development", "construction", "unified", "post",
+                "future", "comprehensive", "land", "site", "pre", "hpc"}
+
+
+DOC_WORDS = re.compile(r"\b(Narrative|Rezoning|Plan|Resolution|Proposed|Approval|Review|Procedures|"
+                       r"Regarding|Begin|Schedule|Exhibit|Section|Chapter|Staff|Report|Downtown|"
+                       r"Economic|Agenda|Minutes|Meeting)\b")
+_LEADING_JUNK = re.compile(r"^(?:(?:January|February|March|April|May|June|July|August|September|"
+                           r"October|November|December|20\d\d|\d{1,2})\b[\s,]*)+")
+
+
+def _strip_leading_junk(name: str) -> str:
+    """'September 2026 Bluewater Engineering Services, LLC' -> 'Bluewater Engineering...'."""
+    return _LEADING_JUNK.sub("", name).strip()
+
+
+def plausible_party(name: str) -> bool:
+    """A party name starts with a capital or a street-number-like digit and isn't prose."""
+    if len(name) < 3 or not (name[0].isupper() or name[0].isdigit()):
+        return False
+    return not DOC_WORDS.search(name) and not NOT_A_PARTY.search(name)
 
 
 def _plausible_entity(name: str) -> bool:
@@ -196,10 +217,23 @@ def _dedupe(seq):
     return out
 
 
+_RUNON = re.compile(r"\s(?=[A-Z]{1,5}[- ]?\d{2,4}-\d)|\s{2,}|\s(?:Tax Map|Map|Parcel)\b")
+_CAPS_RUN = re.compile(r"\s(?=(?:[A-Z]{4,}\s+){2})")
+
+
 def _clean_name(s: str) -> str:
     s = " ".join(s.split()).strip(" ,.;:-–—")
     s = re.sub(r"^(?:and|&|the)\s+", "", s, flags=re.I)
-    return s
+    # Packet text often runs straight on from a name: "Eric Clark VA26-10-01 LOCATION ..."
+    s = _RUNON.split(s, 1)[0]
+    if re.search(r"[a-z]", s):
+        # A mixed-case name followed by ALL-CAPS words is page furniture; an all-caps
+        # name ("RED CLAY DEVELOPMENT GROUP, LLC") is left whole.
+        s = _CAPS_RUN.split(s, 1)[0]
+    words = s.split()
+    if len(words) > 8:
+        s = " ".join(words[:8])
+    return s.strip(" ,.;:-–—")
 
 
 def _entities(span: str) -> list[str]:
@@ -218,7 +252,8 @@ def parties(t: str) -> list[dict]:
 
     def add(name: str, role: str):
         name = _clean_name(name)
-        if len(name) < 3 or NOT_A_PARTY.search(name):
+        name = _strip_leading_junk(name)
+        if not plausible_party(name):
             return
         if not any(p["name_raw"].lower() == name.lower() for p in out):
             out.append({"name_raw": name, "role": role})

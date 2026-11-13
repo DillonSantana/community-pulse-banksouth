@@ -117,6 +117,25 @@ class Extraction(unittest.TestCase):
         self.assertEqual(parcel_ids("tax parcels 062A-005, 062A-005A and C12-034 owned by"),
                          ["062A-005", "062A-005A", "C12-034"])
 
+    def test_columbia_formats(self):
+        # Real Columbia County wording: three-part case numbers, "Tax Map X Parcel Y".
+        text = ("2. (I1b2) RZ26-10-01, Rezoning from R-2 (Single Family Residential) to C-1 "
+                "(Neighborhood Commercial), 4391 Hereford Farm Road, Tax Map 072A Parcel 058, 0.79 acres.\n")
+        (item,) = extract_items(_doc_rec(text))
+        self.assertEqual(item["case_numbers_raw"], ["RZ26-10-01"])
+        self.assertEqual(item["parcel_ids_raw"], ["Tax Map 072A Parcel 058"])
+        self.assertEqual((item["zoning_from"], item["zoning_to"]), ("R-2", "C-1"))
+        self.assertEqual(item["item_number_raw"], "2.")
+        self.assertEqual(parcel_ids("Tax Map 082A Parcel ID 059B"), ["Tax Map 082A Parcel ID 059B"])
+        self.assertEqual(parcel_ids("Tax Map 082A Parcel ID"), [])
+
+    def test_run_on_names_trimmed(self):
+        got = {p["name_raw"]: p["role"] for p in parties(
+            "Applicant: Impact Community Church RZ26-10-02 LOCATION RZ26-10-02 ZONING; "
+            "Development Agreement with RED CLAY DEVELOPMENT GROUP, LLC")}
+        self.assertEqual(got.get("Impact Community Church"), "applicant")
+        self.assertEqual(got.get("RED CLAY DEVELOPMENT GROUP, LLC"), "counterparty")
+
     def test_generic_words_are_not_parties(self):
         names = [p["name_raw"] for p in parties("Extension of the Planned Unit Development Moratorium")]
         self.assertEqual(names, [])
