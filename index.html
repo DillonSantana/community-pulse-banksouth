@@ -6,6 +6,8 @@
 <title>BankSouth Opportunity Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css" crossorigin="anonymous">
 <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -206,7 +208,7 @@ tbody tr:last-child td{border-bottom:0}
 
 /* Map */
 .map{position:relative;background:#e8f0f3;border:1px solid var(--line);border-radius:10px;overflow:hidden;height:540px}
-.map svg{display:block;width:100%;height:100%}
+.map #mapSvg{display:block;width:100%;height:100%}
 .map-legend{position:absolute;left:14px;top:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;display:flex;flex-direction:column;gap:5px}
 .map-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:-1px}
 .map-zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:6px;overflow:hidden}
@@ -320,6 +322,46 @@ tbody tr:last-child td{border-bottom:0}
 }
 #mapSvg text.label{paint-order:stroke;stroke:#eef4f6;stroke-width:4px;stroke-linejoin:round}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Real map (Leaflet). Falls back to the drawn SVG map when offline. */
+.drawer:not(.open){box-shadow:none}
+.map{isolation:isolate}
+#leafletMap{position:absolute;inset:0;z-index:0;background:#dfe8ec}
+.map:not(.is-leaflet) #leafletMap,.map:not(.is-leaflet) .lf-only{display:none}
+.map.is-leaflet #mapSvg{display:none}
+.map>.map-legend,.map>.map-zoom,.map>.map-empty,.map>.map-basemaps,.map>.map-hint{z-index:3}
+.map>.map-loading{z-index:4}
+.map .leaflet-container{font:inherit;background:#dfe8ec}
+.map .leaflet-control-attribution{font-size:10px;max-width:calc(100% - 70px);white-space:normal}
+.map .leaflet-control-scale-line{font-size:11px;border-color:var(--navy);color:var(--navy);background:#ffffffd9}
+.lf-icon{background:none;border:0}
+.lpin{width:26px;height:26px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;font:700 10px var(--sans);color:#fff;border:2.5px solid #fff;box-shadow:0 1px 5px #00000080}
+.lpin.high{background:var(--teal)}.lpin.medium{background:var(--gold)}.lpin.low{background:#8fa3b1}
+.lpin.need{box-shadow:0 0 0 3px var(--red),0 1px 6px #00000080}
+.lcluster{width:36px;height:36px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;border:3px solid #fff;box-shadow:0 1px 6px #00000080;font:700 13px var(--sans)}
+.lcluster.need{box-shadow:0 0 0 3px var(--red),0 1px 6px #00000080}
+.lcenter{position:relative;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:var(--navy);border:3px solid #fff;box-shadow:0 1px 6px #00000080}
+.lcenter span{position:absolute;top:19px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:var(--navy);font:700 12px var(--sans);padding:2px 7px;border-radius:4px;box-shadow:0 2px 8px #0b2d4a33}
+.llead{width:13px;height:13px;box-sizing:border-box;border:2px solid #fff;box-shadow:0 1px 4px #00000080;background:#8a9aa5}
+.llead.high{background:var(--teal)}.llead.medium{background:var(--gold)}.llead.low{background:#8fa3b1}
+.lf-popup .leaflet-popup-content-wrapper{border-radius:8px;box-shadow:0 8px 24px #0b2d4a40;padding:0}
+.lf-popup .leaflet-popup-content{margin:14px;font-size:13px;line-height:1.45}
+.lf-popup h4{margin:0 22px 4px 0;font:600 14px var(--sans);color:var(--navy)}
+.lf-popup p{margin:0 0 10px;color:var(--muted)}
+.map-basemaps{position:absolute;top:14px;right:14px;box-shadow:0 2px 8px #0b2d4a26}
+.map-basemaps button{padding:6px 11px;font-size:12px}
+.map-legend{box-shadow:0 2px 8px #0b2d4a26}
+.map-legend .legend-toggle{border:0;background:none;padding:0;font:600 12px var(--sans);color:var(--navy);cursor:pointer;text-align:left}
+.map-legend .legend-body{display:flex;flex-direction:column;gap:5px}
+.map-legend.collapsed .legend-body{display:none}
+.map-legend label{display:flex;gap:6px;align-items:center;margin-top:3px;cursor:pointer}
+.map-legend i.lg-radius{border-radius:50%;border:2px dashed var(--teal);background:#006f8f14;box-sizing:border-box}
+.map-legend i.lg-lead{border-radius:0;background:#8a9aa5}
+.map-zoom{box-shadow:0 2px 8px #0b2d4a26}
+.map-loading{position:absolute;inset:0;display:grid;place-items:center;background:#e8f0f3d9;color:var(--navy);font-weight:600}
+.map-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#0b2d4ae0;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .2s}
+.map-hint.show{opacity:1}
+@media (max-width:860px){.map-basemaps button{padding:5px 8px}}
 </style>
 </head>
 <body>
@@ -451,14 +493,25 @@ tbody tr:last-child td{border-bottom:0}
       <ul class="agenda" id="evList"></ul>
       <div class="months" id="evCalendar" hidden></div>
       <div class="map" id="evMap" hidden>
+        <div id="leafletMap" role="region" aria-label="Map of events around the selected center"></div>
         <svg id="mapSvg" role="img" aria-label="Map of events around the selected center"></svg>
-        <div class="map-legend">
+        <div class="map-legend" id="mapLegend">
+          <button class="legend-toggle" type="button" aria-expanded="true" onclick="toggleLegend()">Legend</button>
+          <div class="legend-body">
           <span><i style="background:var(--teal)"></i>High relevance (70+)</span>
           <span><i style="background:var(--gold)"></i>Medium (50 to 69)</span>
           <span><i style="background:#9fb0bd"></i>Lower</span>
           <span><i style="background:#fff;border:2px solid var(--red)"></i>Needs a banker</span>
+          <span class="lf-only"><i style="background:var(--navy)"></i>Location center</span>
+          <span class="lf-only"><i class="lg-radius"></i>Search radius</span>
+          <span class="lf-only"><i class="lg-lead"></i>Connected lead</span>
+          <label class="lf-only"><input type="checkbox" id="leadToggle"> Show connected leads</label>
+          </div>
         </div>
-        <div class="map-zoom"><button onclick="mapZoom(1.4)" aria-label="Zoom in">+</button><button onclick="mapZoom(1/1.4)" aria-label="Zoom out">−</button></div>
+        <div class="segmented map-basemaps lf-only" role="group" aria-label="Map style"><button type="button" data-basemap="street" aria-pressed="false">Map</button><button type="button" data-basemap="satellite" aria-pressed="false">Satellite</button><button type="button" data-basemap="hybrid" aria-pressed="false">Hybrid</button></div>
+        <div class="map-loading" id="mapLoading" hidden>Loading map…</div>
+        <div class="map-hint" id="mapHint">Click the map, then scroll to zoom</div>
+        <div class="map-zoom"><button onclick="mapZoom(1.4)" aria-label="Zoom in">+</button><button onclick="mapZoom(1/1.4)" aria-label="Zoom out">−</button><button onclick="mapFit()" aria-label="Fit search area" title="Fit search area">⤢</button></div>
         <div class="map-popup" id="mapPopup" hidden></div>
         <div class="map-empty" id="mapEmpty" hidden>No events in this area. Widen the radius or date range.</div>
       </div>
@@ -555,6 +608,8 @@ tbody tr:last-child td{border-bottom:0}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js" crossorigin="anonymous"></script>
 <script>
 /* ---------- Sample data (anchored to 13 Nov 2026) ---------- */
 const TODAY = new Date('2026-11-13T12:00:00');
@@ -867,8 +922,10 @@ function renderCalendar(){
 
 /* ---------- Map ---------- */
 let mapScale=1;
-function mapZoom(k){mapScale=Math.max(.5,Math.min(4,mapScale*k));renderMap()}
-function renderMap(){
+function mapZoom(k){if(leafletOn()){k>1?lmap.zoomIn():lmap.zoomOut();return}mapScale=Math.max(.5,Math.min(4,mapScale*k));renderSvgMap()}
+function mapFit(){if(leafletOn()){lmap.fitBounds(lmapCircle.getBounds(),{padding:[16,16]});return}mapScale=1;renderSvgMap()}
+/* Drawn map: used when the real map can't load (no internet). */
+function renderSvgMap(){
   const svg=$('#mapSvg'),W=1000,H=560,f=readFilters(),c=centers[f.center];
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const half=Math.max(+f.radius*1.35,25)/mapScale,ppm=(H/2)/half;
@@ -919,6 +976,98 @@ function mapPopup(i,x,y){
   pop.hidden=false;
 }
 $('#evMap').addEventListener('click',e=>{if(!e.target.closest('.pin,.map-popup,.map-zoom'))$('#mapPopup').hidden=true});
+
+/* ---------- Real map (Leaflet) ---------- */
+// Sample locations for connected leads (shown only when "Show connected leads" is on).
+const LEAD_LL={'Oconee Crossing LLC':[33.854,-83.421],'Piedmont Medical Group':[33.49,-83.23],'Cedar Ridge Holdings':[33.635,-83.09],'Oak Street Development':[33.945,-83.39],'Harbor Point Partners':[33.608,-83.155]};
+const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
+const ESRI_IMAGERY='Imagery &copy; Esri, Maxar, Earthstar Geographics';
+const BASEMAPS={
+  street:[[ESRI+'World_Street_Map/MapServer/tile/{z}/{y}/{x}','Map &copy; Esri, HERE, Garmin, USGS, &copy; OpenStreetMap contributors']],
+  satellite:[[ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',ESRI_IMAGERY]],
+  hybrid:[[ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',ESRI_IMAGERY],[ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',''],[ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}','Labels &copy; Esri']]
+};
+let lmap=null,lmapFailed=false,lmapBase=null,lmapBaseName='',lmapCluster,lmapLeads,lmapLinks,lmapCircle,lmapCenter,lmapFitKey='',lmapTilesOk=false,lmapTileErrors=0,hintTimer;
+const leafletOn=()=>!!lmap&&!lmapFailed&&$('#evMap').classList.contains('is-leaflet');
+function renderMap(){
+  const box=$('#evMap');
+  if(!lmapFailed&&window.L&&L.markerClusterGroup){box.classList.add('is-leaflet');initLeaflet();renderLeaflet()}
+  else{box.classList.remove('is-leaflet');renderSvgMap()}
+}
+function useSvgMap(msg){
+  if(lmapFailed)return;lmapFailed=true;$('#mapLoading').hidden=true;$('#evMap').classList.remove('is-leaflet');renderSvgMap();if(msg)toast(msg);
+}
+function initLeaflet(){
+  if(lmap)return;
+  const c=centers[readFilters().center];
+  lmap=L.map('leafletMap',{zoomControl:false,scrollWheelZoom:false,minZoom:6,maxZoom:18,zoomSnap:.25,zoomDelta:1,wheelPxPerZoomLevel:90}).setView(c,9);
+  lmap.attributionControl.setPosition('bottomleft');
+  L.control.scale({imperial:true,metric:false,position:'bottomleft'}).addTo(lmap);
+  lmapCircle=L.circle(c,{radius:1,interactive:false,weight:2.5,dashArray:'7 6'}).addTo(lmap);
+  lmapCenter=L.marker(c,{interactive:false,keyboard:false,zIndexOffset:-1000}).addTo(lmap);
+  lmapCluster=L.markerClusterGroup({maxClusterRadius:45,showCoverageOnHover:false,spiderfyOnMaxZoom:true,
+    iconCreateFunction:cl=>{const need=cl.getAllChildMarkers().some(m=>m.options.need);return L.divIcon({className:'lf-icon',html:`<div class="lcluster${need?' need':''}">${cl.getChildCount()}</div>`,iconSize:[36,36]})}}).addTo(lmap);
+  lmapLeads=L.layerGroup().addTo(lmap);lmapLinks=L.layerGroup().addTo(lmap);
+  lmap.on('popupclose',()=>lmapLinks.clearLayers());
+  // The mouse wheel scrolls the page until the user clicks into the map.
+  const host=$('#leafletMap');
+  host.addEventListener('mousedown',()=>lmap.scrollWheelZoom.enable());
+  host.addEventListener('mouseleave',()=>lmap.scrollWheelZoom.disable());
+  host.addEventListener('wheel',()=>{if(lmap.scrollWheelZoom.enabled())return;const h=$('#mapHint');h.classList.add('show');clearTimeout(hintTimer);hintTimer=setTimeout(()=>h.classList.remove('show'),1400)},{passive:true});
+  document.querySelectorAll('[data-basemap]').forEach(b=>b.onclick=()=>setBasemap(b.dataset.basemap));
+  $('#leadToggle').onchange=renderMap;
+  if(matchMedia('(max-width:860px)').matches)toggleLegend(true);
+  $('#mapLoading').hidden=false;setTimeout(()=>$('#mapLoading').hidden=true,6000);
+  setBasemap(BASEMAPS[store('bsBasemap')]?store('bsBasemap'):'hybrid');
+}
+function setBasemap(name){
+  if(name===lmapBaseName)return;lmapBaseName=name;store('bsBasemap',name);
+  if(lmapBase)lmap.removeLayer(lmapBase);
+  lmapBase=L.layerGroup(BASEMAPS[name].map(([url,attribution])=>{
+    const t=L.tileLayer(url,{maxZoom:18,maxNativeZoom:name==='street'?18:17,attribution});
+    t.on('tileload',()=>{lmapTilesOk=true;$('#mapLoading').hidden=true});
+    t.on('tileerror',()=>{if(!lmapTilesOk&&++lmapTileErrors>=8)useSvgMap('The detailed map could not load, so the simple map is shown.')});
+    return t})).addTo(lmap);
+  const onPhoto=name!=='street';
+  lmapCircle.setStyle(onPhoto?{color:'#ffffff',opacity:.9,fillColor:'#ffffff',fillOpacity:.08}:{color:'#006f8f',opacity:.7,fillColor:'#006f8f',fillOpacity:.07});
+  document.querySelectorAll('[data-basemap]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.basemap===name));
+}
+function toggleLegend(collapse){
+  const l=$('#mapLegend'),c=collapse===true?true:!l.classList.contains('collapsed');
+  l.classList.toggle('collapsed',c);l.querySelector('.legend-toggle').setAttribute('aria-expanded',!c);
+}
+function leafletPopup(e){
+  const n=e.leads.length;
+  return `<h4>${esc(e.name)}</h4><p>${fmtDate(e.date,{weekday:'short',month:'short',day:'numeric'})}, ${e.time}<br>${esc(e.type)}<br>${esc(e.venue)}, ${dist(e)}<br>Relevance ${e.score} · ${n} connected ${n===1?'lead':'leads'}<br>${e.assigned?`Covered by ${esc(e.assigned)}.`:'No banker assigned.'}</p><button class="btn btn-primary btn-small" style="width:100%" onclick="lmap.closePopup();openEvent(${e.id})">View details</button>`;
+}
+function leadBand(name){const o=opps.find(x=>x.name===name);return o?band(o.score):''}
+function drawLeadLinks(e){
+  lmapLinks.clearLayers();if(!$('#leadToggle').checked)return;
+  e.leads.forEach(([name])=>{const ll=LEAD_LL[name];if(ll)L.polyline([e.ll,ll],{color:lmapBaseName==='street'?'#0b2d4a':'#ffffff',weight:2,opacity:.85,dashArray:'4 5',interactive:false}).addTo(lmapLinks)});
+}
+function renderLeaflet(){
+  lmap.invalidateSize();
+  const f=readFilters(),c=centers[f.center],miles=+f.radius;
+  lmapCircle.setLatLng(c).setRadius(miles*1609.34);
+  lmapCenter.setLatLng(c).setIcon(L.divIcon({className:'lf-icon',html:`<div class="lcenter"><span>${esc(f.center)}</span></div>`,iconSize:[16,16],iconAnchor:[8,8]}));
+  lmap.closePopup();lmapCluster.clearLayers();lmapLeads.clearLayers();lmapLinks.clearLayers();
+  lmapCluster.addLayers(visible.map(e=>{
+    const need=e.score>=70&&!e.assigned;
+    const m=L.marker(e.ll,{title:e.name,alt:`${e.name}, relevance ${e.score}`,need,riseOnHover:true,
+      icon:L.divIcon({className:'lf-icon',html:`<div class="lpin ${band(e.score)}${need?' need':''}">${e.score}</div>`,iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-12]})});
+    m.bindPopup(()=>leafletPopup(e),{className:'lf-popup',minWidth:232,maxWidth:232,autoPanPaddingTopLeft:[20,60],autoPanPaddingBottomRight:[60,20]});
+    m.on('popupopen',()=>drawLeadLinks(e));
+    return m}));
+  if($('#leadToggle').checked){
+    const seen=new Set();
+    visible.forEach(e=>e.leads.forEach(([name])=>{const ll=LEAD_LL[name];if(!ll||seen.has(name))return;seen.add(name);
+      L.marker(ll,{keyboard:false,icon:L.divIcon({className:'lf-icon',html:`<div class="llead ${leadBand(name)}"></div>`,iconSize:[13,13],iconAnchor:[6,6]})}).bindTooltip(`${esc(name)} (connected lead)`).addTo(lmapLeads)}));
+  }
+  $('#mapEmpty').hidden=visible.length>0;$('#mapPopup').hidden=true;
+  const key=f.center+'|'+miles;
+  if(key!==lmapFitKey){lmapFitKey=key;lmap.fitBounds(lmapCircle.getBounds(),{padding:[16,16],animate:false})}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lmap)lmap.closePopup()});
 
 /* ---------- Event detail ---------- */
 function openEvent(i){
