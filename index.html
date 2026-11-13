@@ -1384,7 +1384,7 @@ const Tour=(()=>{
     {page:'events',target:`#evList [data-e="${TOP_EVENT}"]`,run:()=>{demoAssign();closeAll(true);setView('list')},title:'Coverage updated',
      body:'Greene County Planning Commission now shows who is covering it, and the count of events needing a banker went down by one.'},
     {page:'overview',center:true,title:'Where the data comes from',
-     body:'Contract signals and events are built to be fed by the county scraper, which reads commission agendas, public hearings and development postings from 30 county websites across Middle and East Georgia. Everything shown today is sample data.'}
+     body:'Contract signals and events are built to be fed by the county scraper, which reads commission agendas, public hearings and development postings from 30 county websites across Middle and East Georgia. County signals and Housing market show real public records. Opportunities, contracts, events and bankers are sample data.'}
   ].filter(s=>s.page!=='housing'||HS);
   const AUTO_MS=8000,ASSIGN_STEP=steps.findIndex(s=>s.title==='Assign coverage');
   let i=0,active=false,auto=false,timer=null,raf=null,assignedByTour=false,tourLog=null,seq=0,saved=null;
