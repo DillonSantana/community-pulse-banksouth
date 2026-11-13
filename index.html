@@ -469,6 +469,30 @@ tbody tr:last-child td{border-bottom:0}
 @media (max-width:860px){.nav .tour-btn{margin-top:0}}
 @media (max-width:760px){.tour-card:not(.center){left:12px!important;right:12px;top:auto!important;bottom:12px;width:auto}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Public records */
+.linkbtn{border:0;background:none;padding:0;font:inherit;font-weight:600;color:var(--teal-dark);cursor:pointer;text-align:left}
+.linkbtn:hover{text-decoration:underline}
+.rec-tabs{margin:0 22px 14px}
+.rec-list{list-style:none;margin:0;padding:0}
+.rec-list li{padding:11px 0;border-top:1px solid var(--line-soft);font-size:14px}
+.rec-list li:first-child{border-top:0}
+.rec-list .meta{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.rec-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.rec-actions{display:flex;gap:6px;flex-wrap:wrap}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.muted{color:var(--muted);font-size:14px;margin:0}
+.insights{list-style:none;margin:0;padding:0}
+.insights li{padding:10px 0;border-top:1px solid var(--line-soft);font-size:14px;line-height:1.45}
+.insights li:first-child{border-top:0}
+.sources{list-style:none;margin:0;padding:0 22px 18px}
+.sources li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;padding:12px 0;border-top:1px solid var(--line-soft);font-size:14px}
+.sources li:first-child{border-top:0}
+.sources li b{color:var(--navy)}
+.sources li p{grid-column:1/-1;margin:0;color:var(--muted);font-size:13px}
+.sale-table th,.sale-table td{padding:8px 10px;font-size:13px}
+.sale-table{border:1px solid var(--line-soft);border-radius:8px;overflow:hidden}
+.records-meta{font-size:13px;color:var(--muted);padding:0 22px 12px}
 </style>
 </head>
 <body>
@@ -481,6 +505,7 @@ tbody tr:last-child td{border-bottom:0}
       <a href="#signals" data-nav="signals">County signals</a>
       <a href="#housing" data-nav="housing">Housing market</a>
       <a href="#events" data-nav="events">Where to be</a>
+      <a href="#records" data-nav="records">Public records</a>
       <button type="button" onclick="openCampaign()">Campaign brief</button>
       <button type="button" class="tour-btn" onclick="Tour.start()">Walkthrough</button>
     </nav>
@@ -526,6 +551,10 @@ tbody tr:last-child td{border-bottom:0}
 
         <div class="side">
           <section>
+            <h2>From public records</h2>
+            <ul class="insights" id="insightList"></ul>
+          </section>
+          <section>
             <h2>Closing soon</h2>
             <ul class="soon" id="soonList"></ul>
           </section>
@@ -547,7 +576,7 @@ tbody tr:last-child td{border-bottom:0}
         <div><h1>Contract signals</h1><p>Public project and contract records in our markets. Verify a record, then turn it into an opportunity a banker owns.</p></div>
         <button class="btn btn-quiet" onclick="toast('Source refresh requested')">Refresh sources</button>
       </div>
-      <p class="notice">These are raw public records, kept apart from opportunities. Each one lists its source and the date we last checked it.</p>
+      <p class="notice">These are bid postings from state and local procurement portals, kept apart from opportunities. Each one lists its portal, solicitation number and the date we last checked it.</p>
       <section class="panel">
         <div class="toolbar" style="padding-top:16px">
           <input class="input grow" id="conSearch" type="search" placeholder="Search projects, agencies or developers" aria-label="Search contracts">
@@ -664,6 +693,32 @@ tbody tr:last-child td{border-bottom:0}
         <div class="map-empty" id="mapEmpty" hidden>No events in this area. Widen the radius or date range.</div>
       </div>
     </section>
+
+    <!-- Public records -->
+    <section class="page" id="page-records" data-page="records" hidden>
+      <div class="page-head">
+        <div><h1>Public records</h1><p>Who owns the land, which companies are behind it, and what they are building. Records are joined by parcel number and business filing, then matched to our customers.</p></div>
+      </div>
+      <p class="notice">Sample records for demonstration. Names, parcel numbers and addresses are invented, but each record has the shape of its real source.</p>
+      <section class="panel">
+        <div class="toolbar" style="padding-top:16px">
+          <input class="input grow" id="recSearch" type="search" placeholder="Search owners, parcels, agents or permits" aria-label="Search records">
+          <select class="input" id="recCounty" aria-label="County"><option value="all">All counties</option><option>Greene</option><option>Oconee</option><option value="Clarke">Clarke (Athens)</option></select>
+        </div>
+        <div class="segmented rec-tabs" role="group" aria-label="Record type">
+          <button data-rec="parcels" aria-pressed="true">Parcels</button><button data-rec="entities" aria-pressed="false">Businesses</button><button data-rec="permits" aria-pressed="false">Building permits</button>
+        </div>
+        <p class="records-meta" id="recMeta"></p>
+        <table>
+          <thead id="recHead"></thead>
+          <tbody id="recRows"></tbody>
+        </table>
+      </section>
+      <section class="panel" style="margin-top:20px">
+        <div class="panel-head"><h2>Data sources</h2><p>What feeds this page</p></div>
+        <ul class="sources" id="recSources"></ul>
+      </section>
+    </section>
   </div>
 </div>
 
@@ -680,6 +735,8 @@ tbody tr:last-child td{border-bottom:0}
     <h3>Why this surfaced</h3>
     <ul class="why" id="dWhy"></ul>
     <div class="callout" id="dNext"></div>
+    <h3>Public records</h3>
+    <div id="dRecords"></div>
     <h3>Relationship owner</h3>
     <div class="route"><div><b id="dOwner"></b><p id="dOwnerNote"></p></div><button class="btn btn-quiet btn-small" id="dOwnerBtn"></button></div>
     <div class="actions">
@@ -722,6 +779,28 @@ tbody tr:last-child td{border-bottom:0}
       <button class="btn btn-quiet btn-small" style="margin-top:10px" onclick="saveNote()">Save note to lead history</button>
       <ul class="note-log" id="eNotes"></ul>
     </div>
+  </div>
+</div>
+
+<!-- Business profile -->
+<div class="modal" id="entityModal" hidden onclick="if(event.target===this)closeAll()">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="enTitle">
+    <div class="sheet-head">
+      <div><h2 id="enTitle"></h2><p id="enSub"></p><div style="margin-top:8px" id="enTag"></div></div>
+      <button class="close" onclick="closeAll()" aria-label="Close">×</button>
+    </div>
+    <div class="sheet-body" id="enBody"></div>
+  </div>
+</div>
+
+<!-- Parcel record -->
+<div class="modal" id="parcelModal" hidden onclick="if(event.target===this)closeAll()">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="paTitle">
+    <div class="sheet-head">
+      <div><h2 id="paTitle"></h2><p id="paSub"></p></div>
+      <button class="close" onclick="closeAll()" aria-label="Close">×</button>
+    </div>
+    <div class="sheet-body" id="paBody"></div>
   </div>
 </div>
 
@@ -793,11 +872,56 @@ const activity = [
   {t:'New deposit signal for Harbor Point Partners.',when:'42 minutes ago'},
   {t:'Alex Reynolds scheduled a follow-up with Harbor Point Partners.',when:'2 hours ago'}
 ];
+/* Bid postings, shaped like state and local procurement portal records. */
 const contracts = [
-  {name:'Lake Oconee workforce housing',county:'Greene',type:'Housing development',value:'$18.5M',status:'closing',statusText:'Bid closes in 9 days',days:9,dev:'Riverbend Communities',phone:'(706) 555-0184',email:'development@riverbend.example',verified:'12 Nov 2026'},
-  {name:'Savannah logistics expansion',county:'Chatham',type:'Industrial development',value:'$31.0M',status:'open',statusText:'Award in 21 days',days:21,dev:'HarborStone Development',phone:'(912) 555-0132',email:'projects@harborstone.example',verified:'12 Nov 2026'},
-  {name:'Athens civic campus renovation',county:'Clarke',countyLabel:'Athens-Clarke',type:'Public works',value:'$7.8M',status:'open',statusText:'RFP open',days:30,dev:'Southern Partners Group',phone:'(706) 555-0118',email:'bids@southernpartners.example',verified:'12 Nov 2026'},
-  {name:'Oconee County fire station 4',county:'Oconee',type:'Public works',value:'$4.2M',status:'awarded',statusText:'Awarded',days:60,dev:'Watkins Build Co.',phone:'(706) 555-0167',email:'office@watkinsbuild.example',verified:'10 Nov 2026'}
+  {name:'Lake Oconee workforce housing',county:'Greene',type:'Housing development',value:'$18.5M',status:'closing',statusText:'Bid closes in 9 days',days:9,agency:'Greene County Development Authority',solicitation:'RFQ 26-07',portal:'County purchasing page',posted:'28 Oct 2026',due:'Responses due 22 Nov 2026',entity:'riverbend',dev:'Riverbend Communities',phone:'(706) 555-0184',email:'development@riverbend.example',verified:'12 Nov 2026'},
+  {name:'Savannah logistics expansion',county:'Chatham',type:'Industrial development',value:'$31.0M',status:'open',statusText:'Award in 21 days',days:21,agency:'Chatham County',solicitation:'RFP 26-114',portal:'County bid portal',posted:'20 Oct 2026',due:'Award expected 4 Dec 2026',dev:'HarborStone Development',phone:'(912) 555-0132',email:'projects@harborstone.example',verified:'12 Nov 2026'},
+  {name:'Athens civic campus renovation',county:'Clarke',countyLabel:'Athens-Clarke',type:'Public works',value:'$7.8M',status:'open',statusText:'RFP open',days:30,agency:'Athens-Clarke County',solicitation:'RFP 26-0310',portal:'Unified government bid portal',posted:'30 Oct 2026',due:'Proposals due 13 Dec 2026',dev:'Southern Partners Group',phone:'(706) 555-0118',email:'bids@southernpartners.example',verified:'12 Nov 2026'},
+  {name:'Oconee County fire station 4',county:'Oconee',type:'Public works',value:'$4.2M',status:'awarded',statusText:'Awarded',days:60,agency:'Oconee County',solicitation:'ITB 26-019',portal:'County purchasing page',posted:'2 Sep 2026',due:'Awarded 6 Nov 2026',dev:'Watkins Build Co.',phone:'(706) 555-0167',email:'office@watkinsbuild.example',verified:'10 Nov 2026'}
+];
+/* ---------- Public records (sample) ----------
+   Shaped like the real sources: county assessor parcels, Georgia Secretary of State
+   business filings and county or city permit logs. Every name, number and address is invented. */
+const CUSTOMERS=[
+  {cif:'00041177',name:'Cedar Ridge Holdings LLC',address:'88 Ridge Rd, Greensboro, GA'},
+  {cif:'00052210',name:'Piedmont Medical Group PC',address:'1450 Peachtree St, Atlanta, GA'},
+  {cif:'00018834',name:'Riverside Commerce LLC',address:'12 Harbor Way, Greensboro, GA'}
+];
+const ENTITIES=[
+  {id:'oconee-crossing',name:'Oconee Crossing LLC',type:'Domestic LLC',control:'S-10421',status:'Active',formed:'2019-03-04',agent:'Lakeside Agent Services Inc.',office:'400 Commerce Way, Watkinsville, GA',verified:'12 Nov 2026'},
+  {id:'oconee-crossing-2',name:'Oconee Crossing Phase II LLC',type:'Domestic LLC',control:'S-28817',status:'Active',formed:'2025-08-12',agent:'Lakeside Agent Services Inc.',office:'400 Commerce Way, Watkinsville, GA',verified:'12 Nov 2026'},
+  {id:'cedar-ridge',name:'Cedar Ridge Holdings LLC',type:'Domestic LLC',control:'S-07730',status:'Active',formed:'2014-05-19',agent:'Piedmont Corporate Agents LLC',office:'88 Ridge Rd, Greensboro, GA',verified:'12 Nov 2026'},
+  {id:'crh-land',name:'CRH Greensboro Land LLC',type:'Domestic LLC',control:'S-27104',status:'Active',formed:'2026-04-02',agent:'Piedmont Corporate Agents LLC',office:'88 Ridge Road, Greensboro, GA',verified:'12 Nov 2026'},
+  {id:'cedar-lot7',name:'Cedar Ridge Lot 7 LLC',type:'Domestic LLC',control:'S-27390',status:'Active',formed:'2026-06-18',agent:'Piedmont Corporate Agents LLC',office:'2200 Main St, Madison, GA',verified:'12 Nov 2026'},
+  {id:'cedar-farms',name:'Cedar Ridge Farms LLC',type:'Domestic LLC',control:'S-01988',status:'Active',formed:'2003-09-30',agent:'Hollis Family Office Inc.',office:'5120 Old Union Rd, Union Point, GA',verified:'12 Nov 2026'},
+  {id:'oak-street',name:'Oak Street Development LLC',type:'Domestic LLC',control:'S-19256',status:'Active',formed:'2017-11-07',agent:'Classic City Agents LLC',office:'310 Oak St, Athens, GA',verified:'11 Nov 2026'},
+  {id:'harbor-point',name:'Harbor Point Partners LP',type:'Domestic LP',control:'S-22041',status:'Active',formed:'2020-02-26',agent:'Coastal Registered Agents Inc.',office:'7 River St, Savannah, GA',verified:'11 Nov 2026'},
+  {id:'riverbend',name:'Riverbend Communities LLC',type:'Domestic LLC',control:'S-15569',status:'Active',formed:'2016-08-15',agent:'Lake Country Filings LLC',office:'60 Shoreline Dr, Eatonton, GA',verified:'12 Nov 2026'},
+  {id:'piedmont-medical',name:'Piedmont Medical Group PC',type:'Professional corporation',control:'S-12008',status:'Active',formed:'2011-01-10',agent:'Midtown Agents Inc.',office:'1450 Peachtree Street, Atlanta, GA',verified:'10 Nov 2026'}
+];
+/* Parcels. "event" points at a meeting in the events list where the parcel is on the agenda. Values in $M. */
+const PARCELS=[
+  {id:'061-0-00-018-0',county:'Greene',situs:'Cherokee Dr, Greensboro',acres:24.0,zoning:'B1, rezoning to PUD requested',owner:'oconee-crossing',assessed:1.18,sales:[['2021-06-15',1.45,'Lake Country Land Trust']],event:0,verified:'12 Nov 2026'},
+  {id:'061-0-00-019-0',county:'Greene',situs:'Cherokee Dr, Greensboro',acres:7.7,zoning:'B1',owner:'oconee-crossing-2',assessed:0.52,sales:[['2025-09-02',0.61,'Lake Country Land Trust']],verified:'12 Nov 2026'},
+  {id:'B05-112A',county:'Oconee',situs:'Commerce Blvd, Watkinsville',acres:12.4,zoning:'B-2',owner:'cedar-ridge',assessed:2.3,sales:[['2019-03-11',1.9,'Watkins Family Partnership']],event:2,verified:'11 Nov 2026'},
+  {id:'045-0-00-077-0',county:'Greene',situs:'Logistics Pkwy, Greensboro',acres:38.2,zoning:'I-1',owner:'crh-land',assessed:1.6,sales:[['2026-05-20',2.1,'Greensboro Industrial Partners LLC'],['2012-10-03',0.9,'Hartwell Timber Co.']],event:7,verified:'12 Nov 2026'},
+  {id:'045-0-00-081-0',county:'Greene',situs:'Logistics Pkwy, Greensboro',acres:5.1,zoning:'I-1',owner:'cedar-lot7',assessed:0.31,sales:[['2026-07-01',0.42,'Greensboro Industrial Partners LLC']],verified:'12 Nov 2026'},
+  {id:'052-0-00-004-0',county:'Greene',situs:'Old Union Rd, Union Point',acres:140.0,zoning:'A-1',owner:'cedar-farms',assessed:0.88,sales:[['1998-04-22',0.31,'Estate of a prior owner']],verified:'12 Nov 2026'},
+  {id:'123-456-007',county:'Clarke',situs:'Oak St, Athens',acres:3.9,zoning:'RM-2',owner:'oak-street',assessed:1.1,sales:[['2024-01-30',1.35,'Eastside Holdings LLC']],verified:'11 Nov 2026'},
+  {id:'071-0-00-033-0',county:'Greene',situs:'Lake Oconee Pkwy, Greensboro',acres:52.0,zoning:'R-2, PUD pending',owner:'riverbend',assessed:2.4,sales:[['2022-11-08',3.1,'Lakeshore Timber LLC']],verified:'12 Nov 2026'}
+];
+/* Building permits from county and city permit logs. Valuation in $M. */
+const PERMITS=[
+  {no:'BP-26-0418',county:'Oconee',juris:'Oconee County',parcel:'B05-112A',entity:'cedar-ridge',type:'Commercial new construction',valuation:4.6,status:'Issued',date:'2026-11-05',verified:'11 Nov 2026'},
+  {no:'BLD-26-1192',county:'Clarke',juris:'Athens-Clarke County',parcel:'123-456-007',entity:'oak-street',type:'Multifamily, 64 units',valuation:9.8,status:'In review',date:'2026-10-22',verified:'11 Nov 2026'},
+  {no:'LD-26-077',county:'Greene',juris:'Greene County',parcel:'045-0-00-077-0',entity:'crh-land',type:'Land disturbance (grading)',valuation:0.35,status:'Issued',date:'2026-11-10',verified:'12 Nov 2026'},
+  {no:'SD-26-031',county:'Greene',juris:'Greene County',parcel:'061-0-00-019-0',entity:'oconee-crossing-2',type:'Site development',valuation:1.2,status:'Applied',date:'2026-11-01',verified:'12 Nov 2026'}
+];
+const RECORD_SOURCES=[
+  ['County assessor parcels','Owner of record, acreage, zoning, assessed value and sale history for each parcel number. Greene County publishes through qPublic; a licensed statewide parcel file covers every county. Refresh weekly.'],
+  ['Georgia Secretary of State business records','Registered agent, principal office, status and formation date. Used to link LLCs that share an agent or office. Check access and terms before collecting automatically.'],
+  ['Building permits','County and city permit logs, often on the same sites the county scraper already reads. Refresh daily.'],
+  ['Bid postings','State and local procurement portals. Feeds Contract signals. Refresh daily.']
 ];
 const centers = {
   'Greensboro':[33.575,-83.182],
@@ -863,6 +987,47 @@ function logActivity(t){activity.unshift({t,when:'Just now'});renderActivity()}
 function renderActivity(){$('#activityList').innerHTML=activity.slice(0,5).map(a=>`<li>${esc(a.t)}<time>${esc(a.when)}</time></li>`).join('')}
 /* Who owns the relationship with a named business, from the opportunity data. */
 function relationshipFor(name){const o=opps.find(x=>x.name===name);return o?{name,owner:o.owner}:null}
+/* ---------- Record matching ---------- */
+const SUFFIX=/\b(llc|l l c|lp|pc|inc|incorporated|co|company|corp|corporation|ltd)\b/g;
+const normName=n=>String(n).toLowerCase().replace(/[.,&']/g,' ').replace(SUFFIX,' ').replace(/\s+/g,' ').trim();
+const normAddr=a=>String(a).toLowerCase().replace(/[.,#]/g,' ').replace(/\bstreet\b/g,'st').replace(/\broad\b/g,'rd').replace(/\bdrive\b/g,'dr').replace(/\bavenue\b/g,'ave').replace(/\bparkway\b/g,'pkwy').replace(/\bboulevard\b/g,'blvd').replace(/\s+/g,' ').trim();
+const entityById=id=>ENTITIES.find(e=>e.id===id);
+const entityByName=n=>ENTITIES.find(e=>normName(e.name)===normName(n));
+const parcelById=id=>PARCELS.find(p=>p.id===id);
+const oppIndexFor=e=>opps.findIndex(o=>normName(o.name)===normName(e.name));
+const linkDecisions={};   // "idA|idB" -> 'confirmed' | 'rejected'. A banker decides; the system only suggests.
+const joinWhy=(w,sep)=>w.map((x,i)=>i?x.toLowerCase():x).join(sep);
+function sharedFields(a,b){const r=[];if(normName(a.agent)===normName(b.agent))r.push('Same registered agent');if(normAddr(a.office)===normAddr(b.office))r.push('Same principal office');return r}
+function relatedTo(e){
+  return ENTITIES.filter(x=>x!==e).map(x=>{const why=sharedFields(e,x),key=[e.id,x.id].sort().join('|');return{e:x,why,key,strength:why.length>1?'strong':'possible',decision:linkDecisions[key]||'suggested'}}).filter(r=>r.why.length);
+}
+function similarNotLinked(e){
+  const base=normName(e.name).split(' ').slice(0,2).join(' ');
+  return ENTITIES.filter(x=>x!==e&&normName(x.name).startsWith(base)&&!sharedFields(e,x).length);
+}
+const customerFor=e=>CUSTOMERS.find(c=>normName(c.name)===normName(e.name));
+function bankMatch(e){
+  const c=customerFor(e);
+  if(c){const same=normAddr(c.address)===normAddr(e.office);
+    return{result:'existing',label:`Existing customer, CIF ${c.cif}`,tag:'tag-green',short:'Existing customer',evidence:[`Name matches customer ${c.cif}`,same?'Principal office matches the address on file':'Principal office differs from the address on file, so confirm before outreach']}}
+  const via=relatedTo(e).filter(r=>r.decision!=='rejected').map(r=>({r,c:customerFor(r.e)})).find(x=>x.c);
+  if(via)return{result:'linked',label:`Linked to customer ${via.c.name}`,tag:'tag-amber',short:'Linked to a customer',via:via.r.e,
+    evidence:[`${joinWhy(via.r.why,' and ')} as ${via.r.e.name}, customer ${via.c.cif}`,via.r.decision==='confirmed'?'A banker confirmed this link':'Suggested link. A banker should confirm it before outreach']};
+  const sim=CUSTOMERS.find(c=>normName(e.name).startsWith(normName(c.name).split(' ').slice(0,2).join(' ')));
+  if(sim)return{result:'none',label:'Not a customer',tag:'tag-plain',short:'Not a customer',evidence:[`Similar name to customer ${sim.name}, but no shared agent or office, so it is treated as a different business`]};
+  return{result:'new',label:'New to bank',tag:'tag-teal',short:'New to bank',evidence:['No customer shares its name, registered agent or office']};
+}
+const fmtM=v=>v>=1?`$${v.toFixed(1)}M`:`$${Math.round(v*1000)}K`;
+const fmtD=d=>fmtDate(d,{month:'short',day:'numeric',year:'numeric'});
+const parcelsOf=e=>PARCELS.filter(p=>p.owner===e.id);
+const permitsOf=e=>PERMITS.filter(p=>p.entity===e.id);
+function eventsFor(e){
+  const ids=new Set(parcelsOf(e).filter(p=>p.event!=null).map(p=>p.event));
+  events.forEach(ev=>{if(ev.leads.some(([n])=>normName(n)===normName(e.name)))ids.add(ev.id)});
+  return [...ids].map(i=>events[i]);
+}
+const entityLink=e=>`<button class="linkbtn" data-ent="${esc(e.id)}">${esc(e.name)}</button>`;
+const parcelLink=p=>`<button class="linkbtn" data-parcel="${esc(p.id)}">${esc(p.id)}</button>`;
 function animateIn(el){if(!el)return;el.classList.remove('enter');void el.offsetWidth;el.classList.add('enter')}
 /* Enter/Space on a focused row opens it. Keys pressed on a link or button inside the
    row belong to that control, so they're left alone (e.g. the List view's Agenda link). */
@@ -903,7 +1068,7 @@ function renderSignals(){
 }
 
 /* ---------- Routing ---------- */
-const PAGES={overview:'Overview',contracts:'Contract signals',signals:'County signals',housing:'Housing market',events:'Where to be'};
+const PAGES={overview:'Overview',contracts:'Contract signals',signals:'County signals',housing:'Housing market',events:'Where to be',records:'Public records'};
 function route(){
   let id=location.hash.slice(1);
   if(id==='where-to-be')id='events';
@@ -913,6 +1078,7 @@ function route(){
   $('#crumb').textContent=PAGES[id];
   if(id==='events')renderEvents();
   if(id==='housing'&&window.hsReady)renderHousingChart();   /* it needs the page visible to size itself */
+  if(id==='records')renderRecords();
   window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',route);
@@ -972,6 +1138,7 @@ function openDrawer(i){
   $('#dFacts').innerHTML=[['Potential value',money(o.value)],['Recommended product',o.product],['Signal',o.signal],['Window',`${o.days} days`]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
   $('#dWhy').innerHTML=o.why.map(w=>`<li>${esc(w)}</li>`).join('');
   $('#dNext').innerHTML=`<b>Next step</b><br>${esc(o.next)}`;
+  $('#dRecords').innerHTML=drawerRecords(o);
   const has=o.owner!=='Unassigned';
   $('#dOwner').textContent=has?o.owner:'No relationship owner yet';
   $('#dOwnerNote').textContent=has?'The existing relationship owner should lead outreach unless a manager reassigns it.':'Claim it yourself, or ask your manager to assign a banker by market.';
@@ -1001,6 +1168,7 @@ function openLayer(sel){
 function closeAll(silent){
   $('#drawer').classList.remove('open');$('#scrim').hidden=true;
   $('#eventModal').hidden=true;$('#campaignModal').hidden=true;$('#mapPopup').hidden=true;
+  $('#entityModal').hidden=true;$('#parcelModal').hidden=true;
   if(!silent&&lastFocus&&lastFocus.focus)lastFocus.focus();
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
@@ -1023,13 +1191,13 @@ $('#cOpp').addEventListener('change',fillCampaign);$('#cType').addEventListener(
 /* ---------- Contracts ---------- */
 function renderContracts(){
   const q=$('#conSearch').value.trim().toLowerCase(),s=$('#conStatus').value,c=$('#conCounty').value;
-  const list=contracts.filter(x=>(s==='all'||x.status===s)&&(c==='all'||x.county===c)&&`${x.name} ${x.type} ${x.dev} ${x.county}`.toLowerCase().includes(q));
+  const list=contracts.filter(x=>(s==='all'||x.status===s)&&(c==='all'||x.county===c)&&`${x.name} ${x.type} ${x.dev} ${x.county} ${x.agency} ${x.solicitation}`.toLowerCase().includes(q));
   const tag={closing:'tag-red',open:'tag-teal',awarded:'tag-plain'};
   $('#conList').innerHTML=list.length?list.map((x,i)=>`<li class="contract">
     <div><h3>${esc(x.name)}</h3><div class="cell-sub">${esc(x.countyLabel||x.county)} County, ${esc(x.type.toLowerCase())}</div>
       <div class="contract-value">${esc(x.value)} <span style="font:400 13px var(--sans);color:var(--muted)">estimated</span></div>
-      <div class="source">Source: public project announcement. Last verified ${esc(x.verified)}.</div></div>
-    <div class="dev"><span class="tag ${tag[x.status]}">${esc(x.statusText)}</span><div style="margin-top:12px"><b>${esc(x.dev)}</b><span>Project developer</span><span>${esc(x.phone)}</span><span><a href="mailto:${esc(x.email)}">${esc(x.email)}</a></span></div></div>
+      <div class="source">${esc(x.agency)}, ${esc(x.solicitation)}. Posted ${esc(x.posted)}. ${esc(x.due)}.<br>Source: ${esc(x.portal)}. Last checked ${esc(x.verified)}.</div></div>
+    <div class="dev"><span class="tag ${tag[x.status]}">${esc(x.statusText)}</span><div style="margin-top:12px">${x.entity&&entityById(x.entity)?`<b>${entityLink(entityById(x.entity))}</b>`:`<b>${esc(x.dev)}</b>`}<span>Project developer</span><span>${esc(x.phone)}</span><span><a href="mailto:${esc(x.email)}">${esc(x.email)}</a></span></div></div>
     <div class="contract-actions">${x.converted?'<button class="btn btn-quiet btn-small" disabled>Opportunity created</button>':`<button class="btn btn-primary btn-small" data-make="${contracts.indexOf(x)}">Create opportunity</button>`}<button class="btn btn-quiet btn-small" data-contact="${contracts.indexOf(x)}">Add contact task</button></div></li>`).join('')
     :`<li class="empty">No records match. Try another county or status.</li>`;
   $('#conList').querySelectorAll('[data-make]').forEach(b=>b.onclick=()=>opportunityFromContract(+b.dataset.make));
@@ -1323,7 +1491,9 @@ function openEvent(i){
   $('#eScoreNote').textContent=`${e.score} of 100, ${bandName[band(e.score)].toLowerCase()}`;
   $('#eStack').innerHTML=SCORE_PARTS.map(([n,,c],j)=>`<i style="width:${e.parts[j]}%;background:${c}" title="${n}: ${e.parts[j]}"></i>`).join('');
   $('#eStackKey').innerHTML=SCORE_PARTS.map(([n,max,c],j)=>`<div><b>${e.parts[j]}<span style="font:400 12px var(--sans);color:var(--muted)"> / ${max}</span></b><em style="background:${c}"></em>${n}</div>`).join('');
-  $('#eLeads').innerHTML=e.leads.length?e.leads.map(([n,w])=>`<div class="lead"><b>${esc(n)}</b>. ${esc(w)}</div>`).join(''):'<p style="margin:0;font-size:14px;color:var(--muted)">No existing lead is connected. Treat this as a prospecting opportunity.</p>';
+  const agendaParcels=PARCELS.filter(p=>p.event===e.id);
+  $('#eLeads').innerHTML=(e.leads.length?e.leads.map(([n,w])=>{const en=entityByName(n);return `<div class="lead"><b>${en?entityLink(en):esc(n)}</b>. ${esc(w)}</div>`}).join(''):'<p style="margin:0;font-size:14px;color:var(--muted)">No existing lead is connected. Treat this as a prospecting opportunity.</p>')
+    +agendaParcels.map(p=>{const ow=entityById(p.owner);return `<div class="lead">Parcel ${parcelLink(p)}: ${p.acres.toFixed(1)} acres, ${esc(p.zoning)}. Owner of record ${entityLink(ow)}.</div>`}).join('');
   $('#ePrep').textContent=`Look for ${e.speakers}. Ask about project timing, capital structure, operating accounts and treasury needs. Lead with local relationship support and financing for acquisition, construction or expansion. Whether to attend is the banker’s call.`;
   const rels=e.leads.map(([n])=>relationshipFor(n)).filter(Boolean);
   const owned=rels.find(r=>r.owner!=='Unassigned');
@@ -1360,11 +1530,160 @@ function saveNote(){
 }
 function renderNotes(e){$('#eNotes').innerHTML=e.notes.map(n=>`<li><b>${esc(n.co||'General note')}</b>, ${esc(n.d)}<br>${esc(n.t)}</li>`).join('')}
 
+/* ---------- Public records ---------- */
+let recTab='parcels';
+function recMatches(text){const q=$('#recSearch').value.trim().toLowerCase();return !q||text.toLowerCase().includes(q)}
+function renderRecords(){
+  const county=$('#recCounty').value,inCounty=c=>county==='all'||c===county;
+  document.querySelectorAll('[data-rec]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.rec===recTab));
+  let head='',rows=[],meta='';
+  if(recTab==='parcels'){
+    head='<tr><th>Parcel</th><th>Owner of record</th><th>Acres</th><th class="hide-sm">Zoning</th><th class="hide-sm">Last sale</th></tr>';
+    const list=PARCELS.filter(p=>{const ow=entityById(p.owner);return inCounty(p.county)&&recMatches(`${p.id} ${p.situs} ${p.zoning} ${ow.name}`)});
+    rows=list.map(p=>{const ow=entityById(p.owner),sale=p.sales[0],recent=daysUntil(sale[0])>-365,hasPermit=PERMITS.some(x=>x.parcel===p.id);
+      return `<tr class="row-link" tabindex="0" data-parcel="${esc(p.id)}"><td><div class="cell-name">${esc(p.id)}</div><div class="cell-sub">${esc(p.situs)}, ${esc(p.county)} County</div>
+        <div class="tags">${p.event!=null?'<span class="tag tag-teal">On an agenda</span>':''}${hasPermit?'<span class="tag tag-plain">Permit</span>':''}${recent?'<span class="tag tag-amber">Sold this year</span>':''}</div></td>
+        <td>${entityLink(ow)}<div class="cell-sub">${esc(bankMatch(ow).short)}</div></td><td>${p.acres.toFixed(1)}</td><td class="hide-sm">${esc(p.zoning)}</td>
+        <td class="hide-sm">${fmtD(sale[0])}<div class="cell-sub">${fmtM(sale[1])}</div></td></tr>`});
+    meta='Joined to agendas by parcel number, and to businesses by owner of record.';
+  }else if(recTab==='entities'){
+    head='<tr><th>Business</th><th class="hide-sm">Registered agent</th><th class="hide-sm">Principal office</th><th>Bank match</th></tr>';
+    const counties=e=>new Set(parcelsOf(e).map(p=>p.county).concat(permitsOf(e).map(p=>p.county)));
+    const list=ENTITIES.filter(e=>(county==='all'||counties(e).has(county))&&recMatches(`${e.name} ${e.agent} ${e.office} ${e.control}`));
+    rows=list.map(e=>{const m=bankMatch(e),rel=relatedTo(e).filter(r=>r.decision!=='rejected');
+      return `<tr class="row-link" tabindex="0" data-ent="${esc(e.id)}"><td><div class="cell-name">${esc(e.name)}</div><div class="cell-sub">${esc(e.type)}, ${esc(e.status)}, formed ${fmtD(e.formed)}</div>
+        ${rel.length?`<div class="tags"><span class="tag tag-plain">${rel.length} related ${rel.length===1?'business':'businesses'}</span></div>`:''}</td>
+        <td class="hide-sm">${esc(e.agent)}</td><td class="hide-sm">${esc(e.office)}</td><td><span class="tag ${m.tag}">${esc(m.short)}</span></td></tr>`});
+    meta='Businesses that share a registered agent or principal office are suggested as related. A banker confirms the link.';
+  }else{
+    head='<tr><th>Permit</th><th>Applicant</th><th class="hide-sm">Parcel</th><th>Valuation</th><th class="hide-sm">Status</th></tr>';
+    const list=PERMITS.filter(p=>{const en=entityById(p.entity);return inCounty(p.county)&&recMatches(`${p.no} ${p.type} ${p.juris} ${p.parcel} ${en.name}`)}).sort((a,b)=>b.date.localeCompare(a.date));
+    rows=list.map(p=>{const en=entityById(p.entity);
+      return `<tr class="row-link" tabindex="0" data-ent="${esc(en.id)}"><td><div class="cell-name">${esc(p.type)}</div><div class="cell-sub">${esc(p.no)}, ${esc(p.juris)}</div></td>
+        <td>${entityLink(en)}<div class="cell-sub">${esc(bankMatch(en).short)}</div></td><td class="hide-sm">${parcelLink(parcelById(p.parcel))}</td><td>${fmtM(p.valuation)}</td>
+        <td class="hide-sm">${esc(p.status)}<div class="cell-sub">${fmtD(p.date)}</div></td></tr>`});
+    meta='Permits signal construction financing. Each is tied to a parcel and to the business that applied.';
+  }
+  $('#recHead').innerHTML=head;$('#recMeta').textContent=meta;
+  $('#recRows').innerHTML=rows.length?rows.join(''):'<tr><td colspan="5"><div class="empty">No records match. Clear the search or choose another county.</div></td></tr>';
+  $('#recRows').querySelectorAll('tr.row-link').forEach(tr=>tr.addEventListener('keydown',e=>{if(e.target===tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tr.click()}}));
+  $('#recSources').innerHTML=RECORD_SOURCES.map(([n,d])=>`<li><b>${esc(n)}</b><span class="tag tag-plain">Sample data</span><p>${esc(d)}</p></li>`).join('');
+}
+
+function openEntity(id){
+  const e=entityById(id);if(!e)return;current.entity=id;
+  const m=bankMatch(e),oi=oppIndexFor(e),rel=relatedTo(e),sim=similarNotLinked(e),parcels=parcelsOf(e),permits=permitsOf(e),evs=eventsFor(e),bids=contracts.filter(x=>x.entity===e.id);
+  $('#enTitle').textContent=e.name;
+  $('#enSub').textContent=`${e.type}, filing ${e.control}`;
+  $('#enTag').innerHTML=`<span class="tag ${m.tag}">${esc(m.short)}</span>`;
+  const acres=parcels.reduce((a,p)=>a+p.acres,0);
+  $('#enBody').innerHTML=`
+    <dl class="facts"><div><dt>Status</dt><dd>${esc(e.status)}</dd></div><div><dt>Formed</dt><dd>${fmtD(e.formed)}</dd></div>
+      <div><dt>Registered agent</dt><dd>${esc(e.agent)}</dd></div><div><dt>Principal office</dt><dd>${esc(e.office)}</dd></div>
+      <div class="wide"><dt>Source</dt><dd style="font-weight:400">Georgia Secretary of State business record (sample), checked ${esc(e.verified)}</dd></div></dl>
+    <h3>Bank match</h3>
+    <div class="route"><div><b>${esc(m.label)}</b><p>${m.evidence.map(esc).join('. ')}.</p></div>${oi>=0?`<button class="btn btn-quiet btn-small" data-open-opp="${oi}">Open opportunity</button>`:''}</div>
+    <h3>Related businesses <span>Suggested from shared filings. You decide.</span></h3>
+    ${rel.length?`<ul class="rec-list">${rel.map(r=>`<li><div class="rec-row"><div>${entityLink(r.e)}<span class="meta">${esc(joinWhy(r.why,' and '))}${customerFor(r.e)?'. Existing customer':''}</span>
+      <div class="tags"><span class="tag ${r.strength==='strong'?'tag-teal':'tag-plain'}">${r.strength==='strong'?'Strong link':'Possible link'}</span>${r.decision!=='suggested'?`<span class="tag ${r.decision==='confirmed'?'tag-green':'tag-plain'}">${r.decision==='confirmed'?'Confirmed':'Marked not related'}</span>`:''}</div></div>
+      <div class="rec-actions">${r.decision==='suggested'?`<button class="btn btn-quiet btn-small" data-link="${esc(r.key)}" data-decide="confirmed">Confirm</button><button class="btn btn-quiet btn-small" data-link="${esc(r.key)}" data-decide="rejected">Not related</button>`:`<button class="btn btn-quiet btn-small" data-link="${esc(r.key)}" data-decide="">Undo</button>`}</div></div></li>`).join('')}</ul>`:'<p class="muted">No other business shares its registered agent or office.</p>'}
+    ${sim.length?`<h3>Similar names, not linked</h3><ul class="rec-list">${sim.map(x=>`<li>${entityLink(x)}<span class="meta">No shared agent or office, so these are treated as different businesses.</span></li>`).join('')}</ul>`:''}
+    <h3>Property <span>${parcels.length?`${parcels.length} ${parcels.length===1?'parcel':'parcels'}, ${acres.toFixed(1)} acres`:''}</span></h3>
+    ${parcels.length?`<ul class="rec-list">${parcels.map(p=>`<li>${parcelLink(p)} <span class="meta">${esc(p.situs)}, ${esc(p.county)} County. ${p.acres.toFixed(1)} acres, ${esc(p.zoning)}. Bought ${fmtD(p.sales[0][0])} for ${fmtM(p.sales[0][1])}.</span></li>`).join('')}</ul>`:'<p class="muted">No parcels on record.</p>'}
+    <h3>Building permits</h3>
+    ${permits.length?`<ul class="rec-list">${permits.map(p=>`<li><b>${esc(p.type)}</b>, ${fmtM(p.valuation)}<span class="meta">${esc(p.no)}, ${esc(p.juris)}. ${esc(p.status)} ${fmtD(p.date)}. Parcel ${esc(p.parcel)}.</span></li>`).join('')}</ul>`:'<p class="muted">No permits on record.</p>'}
+    <h3>Public meetings and events</h3>
+    ${evs.length?`<ul class="rec-list">${evs.map(ev=>`<li><button class="linkbtn" data-open-event="${ev.id}">${esc(ev.name)}</button><span class="meta">${fmtD(ev.date)}, ${esc(ev.town)}</span></li>`).join('')}</ul>`:'<p class="muted">Not on any upcoming agenda or event.</p>'}
+    ${bids.length?`<h3>Bids</h3><ul class="rec-list">${bids.map(x=>`<li><b>${esc(x.name)}</b><span class="meta">${esc(x.agency)}, ${esc(x.solicitation)}. ${esc(x.statusText)}.</span></li>`).join('')}</ul>`:''}
+    <div class="actions">${oi>=0?`<button class="btn btn-primary" data-open-opp="${oi}">Open opportunity</button>`:`<button class="btn btn-primary" id="enCreate">Create opportunity</button>`}</div>`;
+  const create=$('#enCreate');if(create)create.onclick=()=>opportunityFromEntity(e);
+  openLayer('#entityModal');
+}
+
+/* Records become an unassigned opportunity. Linked customers are noted, but a banker still claims it. */
+function opportunityFromEntity(e){
+  if(oppIndexFor(e)>=0)return;
+  const m=bankMatch(e),parcels=parcelsOf(e),permits=permitsOf(e).sort((a,b)=>b.date.localeCompare(a.date));
+  const latest=permits[0],value=latest?Math.max(latest.valuation,0.5):0.5,county=(latest||parcels[0]||{}).county,market=COUNTY_MARKET[county]||'Lake Oconee';
+  const why=[];
+  if(latest)why.push(`${latest.type} permit ${latest.status.toLowerCase()} ${fmtD(latest.date)}`);
+  if(parcels.length)why.push(`Owns ${parcels.reduce((a,p)=>a+p.acres,0).toFixed(1)} acres across ${parcels.length} ${parcels.length===1?'parcel':'parcels'}`);
+  if(m.result==='linked')why.push(`${m.evidence[0]}`);
+  if(m.result==='new')why.push('Not yet a bank customer');
+  const linkedOwner=m.via?(opps[oppIndexFor(m.via)]||{}).owner:'';
+  opps.push({name:e.name,kind:m.result==='existing'?'Existing customer':m.result==='linked'?'Linked to a customer':'Prospect',signal:latest?'Building permit':'Property activity',value,days:30,urgency:'urgent',owner:'Unassigned',market,
+    product:latest&&/grading|site|construction|multifamily/i.test(latest.type)?'Construction financing':'Acquisition financing',score:m.result==='linked'?78:70,why,
+    next:linkedOwner&&linkedOwner!=='Unassigned'?`Check with ${linkedOwner}, who owns the related customer relationship, before reaching out.`:'Confirm the records are current, then assign a banker to reach out.'});
+  opps.sort((a,b)=>a.days-b.days);
+  BOOK.open+=1;BOOK.expiring+=1;BOOK.pipeline+=value;BOOK.addedThisMonth+=value;BOOK.markets[market]=(BOOK.markets[market]||0)+value;
+  renderOpps();renderSide();renderBrief();renderInsights();logActivity(`Jordan Davis created an opportunity for ${e.name} from public records.`);
+  openEntity(e.id);toast(`${e.name} added to opportunities, unassigned`);
+}
+
+function openParcel(id){
+  const p=parcelById(id);if(!p)return;const ow=entityById(p.owner),permits=PERMITS.filter(x=>x.parcel===p.id),ev=p.event!=null?events[p.event]:null;
+  $('#paTitle').textContent=`Parcel ${p.id}`;
+  $('#paSub').textContent=`${p.situs}, ${p.county} County`;
+  $('#paBody').innerHTML=`
+    <dl class="facts"><div><dt>Owner of record</dt><dd>${entityLink(ow)}</dd></div><div><dt>Bank match</dt><dd>${esc(bankMatch(ow).short)}</dd></div>
+      <div><dt>Acres</dt><dd>${p.acres.toFixed(1)}</dd></div><div><dt>Zoning</dt><dd>${esc(p.zoning)}</dd></div>
+      <div><dt>Assessed value</dt><dd>${fmtM(p.assessed)}</dd></div><div><dt>County</dt><dd>${esc(p.county)}</dd></div>
+      <div class="wide"><dt>Source</dt><dd style="font-weight:400">${esc(p.county)} County assessor record (sample), checked ${esc(p.verified)}</dd></div></dl>
+    <h3>Sale history</h3>
+    <table class="sale-table"><thead><tr><th>Date</th><th>Price</th><th>Seller</th></tr></thead><tbody>${p.sales.map(([d,v,from])=>`<tr><td>${fmtD(d)}</td><td>${fmtM(v)}</td><td>${esc(from)}</td></tr>`).join('')}</tbody></table>
+    <h3>On public agendas</h3>
+    ${ev?`<ul class="rec-list"><li><button class="linkbtn" data-open-event="${ev.id}">${esc(ev.name)}</button><span class="meta">${fmtD(ev.date)}, ${esc(ev.town)}</span></li></ul>`:'<p class="muted">Not on an upcoming agenda.</p>'}
+    <h3>Building permits</h3>
+    ${permits.length?`<ul class="rec-list">${permits.map(x=>`<li><b>${esc(x.type)}</b>, ${fmtM(x.valuation)}<span class="meta">${esc(x.no)}. ${esc(x.status)} ${fmtD(x.date)}.</span></li>`).join('')}</ul>`:'<p class="muted">No permits on this parcel.</p>'}`;
+  openLayer('#parcelModal');
+}
+
+function drawerRecords(o){
+  const e=entityByName(o.name);
+  if(!e)return '<p class="muted">No matching business filing or parcel yet.</p>';
+  const m=bankMatch(e),parcels=parcelsOf(e),permits=permitsOf(e),rel=relatedTo(e).filter(r=>r.decision!=='rejected');
+  const items=[`<li>${entityLink(e)}<span class="meta">${esc(m.label)}</span></li>`];
+  if(parcels.length)items.push(`<li>${parcels.length} ${parcels.length===1?'parcel':'parcels'}, ${parcels.reduce((a,p)=>a+p.acres,0).toFixed(1)} acres<span class="meta">${parcels.map(p=>parcelLink(p)).join(', ')}</span></li>`);
+  permits.forEach(p=>items.push(`<li>${esc(p.type)}, ${fmtM(p.valuation)}<span class="meta">${esc(p.no)}, ${esc(p.status)} ${fmtD(p.date)}</span></li>`));
+  if(rel.length)items.push(`<li>Related businesses<span class="meta">${rel.map(r=>entityLink(r.e)).join(', ')}</span></li>`);
+  return `<ul class="rec-list">${items.join('')}</ul>`;
+}
+
+/* Overview: what the public records turned up that a banker should know. */
+function renderInsights(){
+  const out=[];
+  PERMITS.filter(p=>daysUntil(p.date)>=-30).sort((a,b)=>b.date.localeCompare(a.date)).forEach(p=>{
+    const e=entityById(p.entity),m=bankMatch(e);
+    if(m.result==='linked')out.push(`${entityLink(e)} pulled a ${esc(p.type.toLowerCase())} permit. It shares filings with ${entityLink(m.via)}, an existing customer.`);
+    else if(m.result==='existing')out.push(`${entityLink(e)}, an existing customer, has a ${esc(p.type.toLowerCase())} permit ${esc(p.status.toLowerCase())} worth ${fmtM(p.valuation)}.`);
+    else out.push(`${entityLink(e)}, ${m.result==='new'?'new to the bank':'not a customer'}, has a ${esc(p.type.toLowerCase())} permit ${esc(p.status.toLowerCase())}.`);
+  });
+  $('#insightList').innerHTML=out.slice(0,3).map(t=>`<li>${t}</li>`).join('')||'<li class="muted">Nothing new in the last 30 days.</li>';
+}
+
+/* One click handler for every record link. */
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-ent],[data-parcel],[data-open-event],[data-open-opp],[data-link]');
+  if(!b||b.closest('.map'))return;
+  if(b.dataset.link!==undefined){
+    const k=b.dataset.link;if(b.dataset.decide)linkDecisions[k]=b.dataset.decide;else delete linkDecisions[k];
+    const [a,c]=k.split('|').map(entityById);
+    if(b.dataset.decide)logActivity(`Jordan Davis marked ${a.name} and ${c.name} as ${b.dataset.decide==='confirmed'?'related':'not related'}.`);
+    renderInsights();if(!$('#page-records').hidden)renderRecords();openEntity(current.entity);return;
+  }
+  if(b.dataset.ent)openEntity(b.dataset.ent);
+  else if(b.dataset.parcel)openParcel(b.dataset.parcel);
+  else if(b.dataset.openEvent!==undefined)openEvent(+b.dataset.openEvent);
+  else if(b.dataset.openOpp!==undefined)openDrawer(+b.dataset.openOpp);
+});
+
 /* ---------- Init ---------- */
 ['#oppSearch','#oppUrgency','#oppMarket'].forEach(s=>$(s).addEventListener(s==='#oppSearch'?'input':'change',renderOpps));
 ['#conSearch','#conStatus','#conCounty'].forEach(s=>$(s).addEventListener(s==='#conSearch'?'input':'change',renderContracts));
+$('#recSearch').addEventListener('input',renderRecords);$('#recCounty').addEventListener('change',renderRecords);
+document.querySelectorAll('[data-rec]').forEach(b=>b.onclick=()=>{recTab=b.dataset.rec;renderRecords()});
 $('#topSearch').addEventListener('input',e=>{if(location.hash&&location.hash!=='#overview')location.hash='overview';$('#oppSearch').value=e.target.value;renderOpps()});
-initSignals();renderBrief();renderOpps();renderSide();renderActivity();renderContracts();initEventFilters();renderEvents();route();
+initSignals();renderBrief();renderOpps();renderSide();renderActivity();renderInsights();renderContracts();initEventFilters();renderEvents();route();
 
 /* ---------- Housing market (real Zillow Research county data, from data/housing.js) ---------- */
 const HS=window.HOUSING_SNAPSHOT||null;
