@@ -1,0 +1,117 @@
+{
+  "_notes": "One entry per county. Adapter types: civicplus, civicclerk, wordpress, municode, html_docs. See README for the keys each takes. Verified 2026-11-13.",
+  "counties": [
+    {"name": "Baldwin", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "municode", "url": "https://baldwincounty.teammunicode.com/meetings"},
+      {"type": "civicplus", "base": "https://www.baldwincountyga.com", "agenda_center": false}
+    ]},
+    {"name": "Macon-Bibb", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "civicclerk", "tenant": "maconbibbcoga"},
+      {"type": "wordpress", "base": "https://www.maconbibb.us"}
+    ]},
+    {"name": "Crawford", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "wordpress", "base": "https://www.crawfordcountyga.org",
+       "events_pages": ["https://www.crawfordcountyga.org/events-2/"]}
+    ]},
+    {"name": "Houston", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "html_docs", "pages": ["https://www.houstoncountyga.gov/commissioner/meeting-minutes.cms"]},
+      {"type": "html_docs", "pages": ["https://www.houstoncountyga.gov/residents/news.cms"],
+       "link_pattern": "news\\.cms/20\\d\\d/\\d+/", "match": ".", "undated_limit": 12, "kind": "notice"},
+      {"type": "html_docs", "pages": ["https://www.houstoncountyga.gov/"],
+       "link_pattern": "calendar\\.cms\\?date=", "match": ".", "kind": "event"}
+    ]},
+    {"name": "Jones", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "wordpress", "base": "https://www.jonescountyga.org"}
+    ]},
+    {"name": "Monroe", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "wordpress", "base": "https://www.monroecoga.org",
+       "events_pages": ["https://www.monroecoga.org/calendar/"]}
+    ]},
+    {"name": "Peach", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "wordpress", "base": "https://peachcounty.gov", "ical": "https://peachcounty.gov/events/?ical=1"}
+    ]},
+    {"name": "Pulaski", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "wordpress", "base": "https://hawkinsville-pulaski.org",
+       "events_pages": ["https://hawkinsville-pulaski.org/events/"]}
+    ]},
+    {"name": "Putnam", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "civicplus", "base": "https://www.putnamcountyga.us"}
+    ]},
+    {"name": "Twiggs", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "wordpress", "base": "https://www.twiggscounty.us"}
+    ]},
+    {"name": "Wilkinson", "region": "Middle Georgia (MGRC)", "adapters": [
+      {"type": "wordpress", "base": "https://www.wilkinsoncounty.net",
+       "events_pages": ["https://www.wilkinsoncounty.net/upcoming-events/"]}
+    ]},
+
+    {"name": "Augusta-Richmond", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "municode", "url": "https://augustarichmond-ga.municodemeetings.com/"},
+      {"type": "civicplus", "base": "https://www.augustaga.gov", "agenda_center": false}
+    ]},
+    {"name": "Columbia", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "civicclerk", "tenant": "columbiacoga"},
+      {"type": "civicplus", "base": "https://www.columbiacountyga.gov", "agenda_center": false}
+    ]},
+    {"name": "Burke", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "html_docs", "pages": [
+        "https://www.burkecounty-ga.gov/departments/board_of_commissioners/meetings_agendas_minutes.php"]}
+    ]},
+    {"name": "Glascock", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "html_docs", "pages": ["https://glascockcountyga.com/"], "undated_limit": 10}
+    ]},
+    {"name": "Hancock", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "html_docs", "pages": ["https://www.hancockcountyga.gov/board-of-commissioners"], "undated_limit": 5}
+    ]},
+    {"name": "Jefferson", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "html_docs", "pages": ["https://www.jeffersoncountyga.gov/"]},
+      {"type": "civicplus", "base": "https://www.jeffersoncountyga.gov", "agenda_center": false}
+    ]},
+    {"name": "Jenkins", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "html_docs", "pages": ["https://www.jenkinscountyga.com/jenkins-county-minutes-agendas.php"],
+       "undated_limit": 6}
+    ]},
+    {"name": "Lincoln", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "html_docs", "pages": ["https://lincolncountyga.com/boc-meeting-agendas",
+                                       "https://lincolncountyga.com/boc-meeting-minutes"], "undated_limit": 6}
+    ]},
+    {"name": "McDuffie", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "civicplus", "base": "https://www.thomson-mcduffie.gov"}
+    ]},
+    {"name": "Taliaferro", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "wordpress", "base": "https://taliaferrocountyga.org"}
+    ]},
+    {"name": "Warren", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "html_docs", "pages": ["https://www.warrencountyga.com/board-of-commissioners.html",
+                                       "https://www.warrencountyga.com/public-notices.html",
+                                       "https://www.warrencountyga.com/development1.html"]}
+    ]},
+    {"name": "Washington", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "civicplus", "base": "https://www.washingtoncountyga.gov"}
+    ]},
+    {"name": "Wilkes", "region": "East Georgia (CSRA)", "adapters": [
+      {"type": "civicplus", "base": "https://wilkescounty.net"}
+    ]},
+
+    {"name": "Greene", "region": "BankSouth home counties", "adapters": [
+      {"type": "civicclerk", "tenant": "greenecoga"},
+      {"type": "civicplus", "base": "https://www.greenecountyga.gov", "agenda_center": false}
+    ]},
+    {"name": "Oconee", "region": "BankSouth home counties", "adapters": [
+      {"type": "civicclerk", "tenant": "oconeecountyga"},
+      {"type": "civicplus", "base": "https://www.oconeecountyga.gov", "agenda_center": false}
+    ]},
+    {"name": "Morgan", "region": "BankSouth home counties", "adapters": [
+      {"type": "civicplus", "base": "https://www.morgancountyga.gov"}
+    ]},
+    {"name": "Bleckley", "region": "BankSouth home counties", "adapters": [
+      {"type": "wordpress", "base": "https://bleckley.org"}
+    ]},
+    {"name": "Laurens", "region": "BankSouth home counties", "adapters": [
+      {"type": "civicplus", "base": "https://www.laurenscoga.org"}
+    ]},
+    {"name": "Johnson", "region": "BankSouth home counties", "adapters": [
+      {"type": "html_docs", "pages": ["https://www.johnsonco.org/"], "undated_limit": 10}
+    ]}
+  ]
+}
