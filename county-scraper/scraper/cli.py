@@ -24,11 +24,14 @@ from .adapters.base import Context
 from .contract import CountyRun, candidate_files, document_record, write_jsonl
 from .documents import DocumentFetcher
 from .http import Client
+from .hub_export import build_events, write_js
 from .models import Item
 from .store import Store, export
 from .tagging import tag_item
 
 ROOT = Path(__file__).resolve().parent.parent
+# The Opportunity Hub (index.html) sits one level up; its calendar reads this file.
+HUB_EVENTS = ROOT.parent / "data" / "county-events.js"
 log = logging.getLogger("scraper")
 
 TAG_TEXT_LIMIT = 60_000      # characters of document text used for scoring/highlights
@@ -168,6 +171,16 @@ def cmd_run(args: argparse.Namespace) -> int:
     stamp = datetime.now().strftime("%Y%m%dT%H%M")
     paths["jsonl"] = write_jsonl(runs, Path(args.out) / f"scrape_{stamp}{suffix}.jsonl")
 
+    # Feed the hub calendar. A --county run would drop every other county from the
+    # calendar, so it only writes there when --hub-out is given explicitly.
+    hub_path = Path(args.hub_out) if args.hub_out else (
+        HUB_EVENTS if not args.county and not args.no_hub and (ROOT.parent / "index.html").exists() else None)
+    if hub_path:
+        names = {c["name"]: c["county"] for c in counties}
+        hub_events = build_events(all_items, names, today)
+        paths["hub"] = write_js(hub_events, hub_path, datetime.now().astimezone())
+        print(f"{len(hub_events)} upcoming meetings sent to the hub calendar")
+
     hot = sum(1 for i in all_items if i.score >= args.min_score)
     print(f"\n{len(all_items)} items from {len(counties)} counties "
           f"({len(new)} new, {hot} scored {args.min_score}+), window {start} to {end}")
@@ -252,6 +265,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--ignore-robots", action="store_true")
     r.add_argument("--db", default=str(ROOT / "data" / "items.db"))
     r.add_argument("--out", default=str(ROOT / "out"))
+    r.add_argument("--hub-out", help=f"write hub calendar events here (default {HUB_EVENTS.relative_to(ROOT.parent)} on full runs)")
+    r.add_argument("--no-hub", action="store_true", help="don't update the hub calendar")
     r.set_defaults(fn=cmd_run)
 
     e = sub.add_parser("extract", help="split scraped documents into structured agenda items")

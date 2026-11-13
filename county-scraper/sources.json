@@ -90,7 +90,8 @@
       {"type": "civicplus", "base": "https://www.washingtoncountyga.gov"}
     ]},
     {"name": "Wilkes", "county": "Wilkes", "fips": "13317", "region": "East Georgia (CSRA)", "adapters": [
-      {"type": "civicplus", "base": "https://wilkescounty.net"}
+      {"type": "html_docs", "pages": ["https://www.wilkescountyga.org/"], "undated_limit": 10,
+       "_note": "wilkescounty.net is Wilkes County, NC. The Georgia site sits behind a Cloudflare bot challenge, so this fails until the county allows access."}
     ]},
 
     {"name": "Greene", "county": "Greene", "fips": "13133", "region": "BankSouth home counties", "adapters": [

@@ -22,7 +22,7 @@ East GA (CSRA),McDuffie,https://www.thomson-mcduffie.gov,CivicPlus (joint city-c
 East GA (CSRA),Taliaferro,https://taliaferrocountyga.org,WordPress,,https://taliaferrocountyga.org/events/,/development-authority/ page; /feed,ok - no agenda archive seen
 East GA (CSRA),Warren,https://www.warrencountyga.com,Weebly-style static,(PDF uploads under /uploads/),https://www.warrencountyga.com/calendar.html,development1.html + planning--zoning.html; depotdirect.org event calendar,ok - HTML scrape
 East GA (CSRA),Washington,https://www.washingtoncountyga.gov,CivicPlus,https://www.washingtoncountyga.gov/AgendaCenter,https://www.washingtoncountyga.gov/calendar.aspx?CID=14,RSSFeed.aspx?ModID=65 (agendas),ok
-East GA (CSRA),Wilkes,https://wilkescounty.net,CivicPlus,https://wilkescounty.net/agendacenter,https://wilkescounty.net/calendar.aspx?CID=14,RSSFeed.aspx?ModID=65; old domain wilkescountyga.org 403,ok
+East GA (CSRA),Wilkes,https://www.wilkescountyga.org,Unknown (Cloudflare challenge),,,wilkescounty.net is Wilkes County NC - do not use; Washington-Wilkes Chamber calendar lists BOC meetings,blocked
 BankSouth home,Greene,https://www.greenecountyga.gov,CivicPlus + CivicClerk,https://www.greenecountyga.gov/AgendaCenter,,/441/Economic-Development; /438/Meetings-Public-Hearings,ok
 BankSouth home,Oconee,https://www.oconeecountyga.gov,CivicPlus,https://www.oconeecountyga.gov/129/Agendas-Minutes,https://www.oconeecountyga.gov/calendar.aspx,RSSFeed.aspx?ModID=58,ok
 BankSouth home,Morgan,https://www.morgancountyga.gov,CivicPlus,https://www.morgancountyga.gov/AgendaCenter,https://www.morgancountyga.gov/calendar.aspx,RSSFeed.aspx?ModID=65&CID=All-0 (verified working),ok

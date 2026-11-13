@@ -14,7 +14,7 @@ import re
 from datetime import datetime
 from urllib.parse import urljoin
 
-from ..dates import find_date, parse_iso
+from ..dates import find_date, find_time, parse_iso
 from ..models import Item
 from .base import Context, clean, kind_from_title, soup
 
@@ -87,16 +87,45 @@ def _jsonld_events(markup: str):
                 stack.extend(node)
 
 
+_MEC_RANGE = re.compile(r"\b(\d{1,2}:\d{2}\s*[ap]\.?m\.?)\s*[-–]\s*\d{1,2}:\d{2}\s*[ap]\.?m\.?", re.I)
+
+
+def _mec_page_time(ctx: Context, url: str) -> str:
+    """Start time as shown on a Modern Events Calendar event page ('10:00 am - 11:00 am').
+
+    MEC's JSON-LD time is unreliable: Pulaski's 10 AM meetings come through as
+    05:00-05:00 (the offset applied twice). The page itself shows the right time.
+    Returns '' for all-day events or when the page can't be read.
+    """
+    try:
+        page = soup(ctx.client.text(url))
+    except Exception:
+        return ""
+    box = page.select_one(".mec-single-event-time, .mec-event-time, .mec-time-details")
+    text = " ".join((box or page).get_text(" ", strip=True).split())
+    if box is not None and re.search(r"\ball day\b", text, re.I):
+        return ""
+    m = _MEC_RANGE.search(text)
+    return find_time(m.group(1)) if m else ""
+
+
 def events_pages(ctx: Context, pages: list[str]) -> list[Item]:
     out, seen = [], set()
     for page in pages:
-        for ev in _jsonld_events(ctx.client.text(page)):
+        markup = ctx.client.text(page)
+        is_mec = "modern-events-calendar" in markup
+        for ev in _jsonld_events(markup):
             when = parse_iso(ev.get("startDate"))
             url = ev.get("url") or page
             key = (ev.get("name"), str(when), url)
             if key in seen or not ctx.in_window(when):
                 continue
             seen.add(key)
+            start = ev.get("startDate") or ""
+            if is_mec and "T" in start and url != page:
+                event_time = _mec_page_time(ctx, url)     # trust the page, not MEC's JSON-LD
+            else:
+                event_time = find_time(start)
             loc = ev.get("location") or {}
             if isinstance(loc, list):
                 loc = loc[0] if loc else {}
@@ -106,7 +135,7 @@ def events_pages(ctx: Context, pages: list[str]) -> list[Item]:
             location = clean(f"{loc.get('name', '') if isinstance(loc, dict) else ''} {addr or ''}", 300)
             out.append(ctx.item(
                 kind="event", title=clean(ev.get("name"), 300), url=url,
-                event_date=when, location=location,
+                event_date=when, event_time=event_time, location=location,
                 body=clean(ev.get("description")), source="wordpress.events",
             ))
     return out
@@ -137,7 +166,7 @@ def ical(ctx: Context, url: str) -> list[Item]:
                 desc = cur.get("DESCRIPTION", "").replace("\\n", " ").replace("\\,", ",")
                 out.append(ctx.item(
                     kind="event", title=clean(cur.get("SUMMARY", "").replace("\\,", ","), 300),
-                    url=cur.get("URL", url), event_date=when,
+                    url=cur.get("URL", url), event_date=when, event_time=find_time(raw),
                     location=clean(cur.get("LOCATION", "").replace("\\,", ","), 300),
                     body=clean(desc), source="wordpress.ical",
                 ))
