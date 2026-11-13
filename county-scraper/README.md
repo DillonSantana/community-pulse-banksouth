@@ -256,6 +256,9 @@ morning at 10:15 UTC (6:15 AM Eastern in summer). Each run:
    the timestamp changed makes no commit.
 3. Attaches the Lead Finder handoff JSONL, the digest and the CSV to the run as a
    downloadable artifact, kept for 30 days.
+4. On the 18th of each month (Zillow publishes mid-month), and on manual runs, also
+   refreshes `data/housing.js` with `python -m scraper housing --site`. A housing
+   failure only warns, so it never blocks the meeting update.
 
 The scraper's memory (`data/items.db`: seen items, document hashes, ETags) is carried
 between runs in the Actions cache, so "new" means new and unchanged files aren't
