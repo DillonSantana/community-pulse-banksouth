@@ -321,7 +321,6 @@ tbody tr:last-child td{border-bottom:0}
   .nav a,.nav button{width:auto;padding:7px 10px;font-size:13px}
 }
 #mapSvg text.label{paint-order:stroke;stroke:#eef4f6;stroke-width:4px;stroke-linejoin:round}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* Real map (Leaflet). Falls back to the drawn SVG map when offline. */
 .drawer:not(.open){box-shadow:none}
@@ -362,6 +361,39 @@ tbody tr:last-child td{border-bottom:0}
 .map-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#0b2d4ae0;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .2s}
 .map-hint.show{opacity:1}
 @media (max-width:860px){.map-basemaps button{padding:5px 8px}}
+/* Transitions */
+@keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.enter{animation:enter .4s cubic-bezier(.2,.7,.2,1) both}
+.modal:not([hidden]) .modal-card{animation:pop .26s cubic-bezier(.2,.7,.2,1) both}
+.modal:not([hidden]),.scrim:not([hidden]){animation:fade .2s ease both}
+.modal:not([hidden]){background:#0b2d4a66}
+
+/* Walkthrough */
+.nav .tour-btn{margin-top:14px;border:1px solid #2f5b7b;color:#fff}
+.nav .tour-btn:hover{border-color:var(--gold)}
+.tour-block{position:fixed;inset:0;z-index:48}
+.tour-spot{position:fixed;z-index:49;border-radius:12px;pointer-events:none;box-shadow:0 0 0 2px var(--gold),0 0 0 200vmax #0b2d4a8c;transition:top .5s cubic-bezier(.2,.7,.2,1),left .5s cubic-bezier(.2,.7,.2,1),width .5s cubic-bezier(.2,.7,.2,1),height .5s cubic-bezier(.2,.7,.2,1)}
+.tour-spot.full{box-shadow:0 0 0 0 transparent,0 0 0 200vmax #0b2d4ad9}
+.tour-card{position:fixed;z-index:50;width:320px;background:var(--surface);border-radius:12px;box-shadow:0 18px 50px #0b2d4a59;padding:20px 20px 16px;transition:top .5s cubic-bezier(.2,.7,.2,1),left .5s cubic-bezier(.2,.7,.2,1),opacity .2s}
+.tour-card.swap{opacity:0}
+.tour-card.center{width:min(560px,calc(100vw - 32px));padding:36px 38px 30px}
+.tour-step{font-size:12px;color:var(--muted);margin:0 0 6px}
+.tour-card h2{font-size:20px;line-height:1.25;margin:0 0 8px}
+.tour-card.center h2{font-size:30px;margin-bottom:12px}
+.tour-card p.tour-body{margin:0;font-size:14px;line-height:1.55;color:var(--ink)}
+.tour-card.center p.tour-body{font-size:16px;max-width:46ch}
+.tour-rule{width:44px;height:3px;border-radius:2px;background:var(--gold);margin:0 0 18px}
+.tour-progress{height:3px;background:var(--line-soft);border-radius:2px;margin:16px 0 12px;overflow:hidden}
+.tour-progress i{display:block;height:100%;width:0;background:var(--gold)}
+.tour-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tour-nav .spacer{flex:1}
+.tour-x{position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:50%;background:var(--paper);color:var(--muted);font-size:18px;cursor:pointer}
+.tour-keys{font-size:12px;color:var(--muted);margin-top:10px}
+@media (max-width:860px){.nav .tour-btn{margin-top:0}}
+@media (max-width:760px){.tour-card:not(.center){left:12px!important;right:12px;top:auto!important;bottom:12px;width:auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -373,6 +405,7 @@ tbody tr:last-child td{border-bottom:0}
       <a href="#contracts" data-nav="contracts">Contract signals</a>
       <a href="#events" data-nav="events">Where to be</a>
       <button type="button" onclick="openCampaign()">Campaign brief</button>
+      <button type="button" class="tour-btn" onclick="Tour.start()">Walkthrough</button>
     </nav>
     <div class="rail-foot">Data refreshed 18 minutes ago<br>Sample data for demonstration</div>
   </aside>
@@ -696,6 +729,7 @@ function logActivity(t){activity.unshift({t,when:'Just now'});renderActivity()}
 function renderActivity(){$('#activityList').innerHTML=activity.slice(0,5).map(a=>`<li>${esc(a.t)}<time>${esc(a.when)}</time></li>`).join('')}
 /* Who owns the relationship with a named business, from the opportunity data. */
 function relationshipFor(name){const o=opps.find(x=>x.name===name);return o?{name,owner:o.owner}:null}
+function animateIn(el){if(!el)return;el.classList.remove('enter');void el.offsetWidth;el.classList.add('enter')}
 function rowKey(el,fn){el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})}
 
 /* ---------- Routing ---------- */
@@ -704,7 +738,7 @@ function route(){
   let id=location.hash.slice(1);
   if(id==='where-to-be')id='events';
   if(!PAGES[id])id='overview';
-  document.querySelectorAll('[data-page]').forEach(p=>p.hidden=p.dataset.page!==id);
+  document.querySelectorAll('[data-page]').forEach(p=>{const show=p.dataset.page===id;if(show&&p.hidden)animateIn(p);p.hidden=!show});
   document.querySelectorAll('[data-nav]').forEach(a=>{if(a.dataset.nav===id)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   $('#crumb').textContent=PAGES[id];
   if(id==='events')renderEvents();
@@ -886,6 +920,7 @@ function renderEvents(){
 function setView(v){
   view=v;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
   $('#evList').hidden=v!=='list';$('#evCalendar').hidden=v!=='calendar';$('#evMap').hidden=v!=='map';
+  animateIn($({list:'#evList',calendar:'#evCalendar',map:'#evMap'}[v]));
   if(v==='calendar')renderCalendar();if(v==='map'){mapScale=1;renderMap()}
 }
 function coverageTag(e){return e.assigned?`<span class="tag tag-green">Covered by ${esc(e.assigned)}</span>`:e.score>=70?'<span class="tag tag-red">Needs a banker</span>':''}
@@ -1121,6 +1156,162 @@ function renderNotes(e){$('#eNotes').innerHTML=e.notes.map(n=>`<li><b>${esc(n.co
 ['#conSearch','#conStatus','#conCounty'].forEach(s=>$(s).addEventListener(s==='#conSearch'?'input':'change',renderContracts));
 $('#topSearch').addEventListener('input',e=>{if(location.hash&&location.hash!=='#overview')location.hash='overview';$('#oppSearch').value=e.target.value;renderOpps()});
 renderBrief();renderOpps();renderSide();renderActivity();renderContracts();initEventFilters();renderEvents();route();
+
+/* ---------- Walkthrough ---------- */
+const Tour=(()=>{
+  const TOP_EVENT=0;
+  const steps=[
+    {page:'overview',center:true,title:'BankSouth Opportunity Hub',
+     body:'One place for relationship bankers to see who to call, which public projects to watch, and where to be in person. This walkthrough takes about two minutes.'},
+    {page:'overview',target:'.brief',title:'Start with the day’s brief',
+     body:'The hub reads the pipeline and writes one sentence: what closes soon, and what still has no banker.'},
+    {page:'overview',target:'.figures',title:'The numbers that matter',
+     body:'Open opportunities, what expires in the next 30 days, the estimated pipeline, and how much of it we’ve already contacted.'},
+    {page:'overview',target:'.overview-grid > .panel',title:'Priority opportunities',
+     body:'Sorted by urgency. Search, or filter by urgency and market, then open any row for the full story.'},
+    {page:'overview',target:'#drawer',run:()=>openDrawer(0),title:'Why it surfaced',
+     body:'Every opportunity shows its score, the evidence behind it, a recommended next step, and who owns the relationship.'},
+    {page:'overview',target:'#campaignModal .modal-card',run:()=>openCampaign(0),title:'Campaign brief',
+     body:'Turn an opportunity into outreach. Verified facts are kept apart from hypotheses, so nobody presents a guess as fact.'},
+    {page:'contracts',target:'#conList',title:'Contract signals',
+     body:'Public project and contract records, each with its source and the date we last checked it. Verified records become opportunities a banker owns.'},
+    {page:'events',target:'.filterbar',run:()=>setView('list'),title:'Where to be',
+     body:'Meetings and events where future clients will be in the room. Filter by distance from a branch town, date and event type.'},
+    {page:'events',target:'#evList .event',run:()=>setView('list'),title:'Ranked by relevance',
+     body:'Each event is scored out of 100. High-value events with no banker covering them are flagged in red.'},
+    {page:'events',target:'#evCalendar .month',run:()=>setView('calendar'),title:'Calendar view',
+     body:'The same events on a month grid, so coverage can be planned week by week.'},
+    {page:'events',target:'#evMap',run:()=>setView('map'),title:'Map view',
+     body:'Events placed by real location around the selected town, with the search radius drawn to scale. Red rings need a banker.'},
+    {page:'events',target:'#eventModal .modal-card',run:()=>{setView('list');openEvent(TOP_EVENT)},title:'A score you can explain',
+     body:'Relevance breaks into five parts: connected leads, event type, developer attendance, distance and cost. Prep notes tell whoever attends who to look for.'},
+    {page:'events',target:'#eventModal .inline-form',keep:true,run:()=>{if($('#eventModal').hidden)openEvent(TOP_EVENT);const tok=seq;setTimeout(()=>{if(active&&tok===seq)demoAssign()},900)},title:'Assign coverage',
+     body:'Assigning a banker clears the “Needs a banker” flag everywhere: in the list, on the calendar and on the map.'},
+    {page:'events',target:`#evList [data-e="${TOP_EVENT}"]`,run:()=>{demoAssign();closeAll(true);setView('list')},title:'Coverage updated',
+     body:'Greene County Planning Commission now shows who is covering it, and the count of events needing a banker went down by one.'},
+    {page:'overview',center:true,title:'Where the data comes from',
+     body:'Contract signals and events are built to be fed by the county scraper, which reads commission agendas, public hearings and development postings from 30 county websites across Middle and East Georgia. Everything shown today is sample data.'}
+  ];
+  const AUTO_MS=8000,ASSIGN_STEP=steps.findIndex(s=>s.title==='Assign coverage');
+  let i=0,active=false,auto=false,timer=null,raf=null,assignedByTour=false,tourLog=null,seq=0,saved=null;
+  let block,spot,card;
+
+  function build(){
+    block=document.createElement('div');block.className='tour-block';
+    spot=document.createElement('div');spot.className='tour-spot';
+    card=document.createElement('div');card.className='tour-card';card.setAttribute('role','dialog');card.setAttribute('aria-label','Guided walkthrough');card.setAttribute('aria-live','polite');
+    document.body.append(block,spot,card);
+  }
+  function start(){
+    if(active)return;
+    closeAll(true);
+    saved={f:readFilters(),sort:$('#evSort').value,view,assigned:events[TOP_EVENT].assigned};
+    events[TOP_EVENT].assigned='';$('#evSort').value='score';applyFilters(DEFAULTS);setView('list');
+    if(!block)build();
+    active=true;i=0;block.hidden=spot.hidden=card.hidden=false;
+    document.addEventListener('keydown',keys,true);
+    show();loop();
+  }
+  function end(){
+    active=false;stopAuto();cancelAnimationFrame(raf);
+    document.removeEventListener('keydown',keys,true);
+    block.hidden=spot.hidden=card.hidden=true;
+    seq++;undoAssign();closeAll(true);
+    if(saved){events[TOP_EVENT].assigned=saved.assigned;$('#evSort').value=saved.sort;applyFilters(saved.f);setView(saved.view);saved=null}
+    if(location.hash!=='#overview')location.hash='overview';else route();
+  }
+  function demoAssign(){
+    if(assignedByTour)return;current.event=TOP_EVENT;$('#eBanker').value='Jordan Davis';assignEvent();assignedByTour=true;tourLog=activity[0];
+  }
+  /* Take back the demo assignment, including its line in Recent activity. */
+  function undoAssign(){
+    if(!assignedByTour)return;assignedByTour=false;events[TOP_EVENT].assigned='';
+    const k=activity.indexOf(tourLog);if(k>=0)activity.splice(k,1);tourLog=null;renderActivity();renderEvents();
+  }
+  function go(n){if(n<0||n>=steps.length)return;i=n;show()}
+  function next(){if(i<steps.length-1)go(i+1);else end()}
+  function back(){go(i-1)}
+  function show(){
+    const s=steps[i],tok=++seq;
+    card.classList.add('swap');
+    if(i<ASSIGN_STEP)undoAssign();
+    if(!s.keep)closeAll(true);
+    if(location.hash.slice(1)!==s.page)location.hash=s.page;
+    setTimeout(()=>{
+      if(!active||tok!==seq)return;
+      if(s.run)s.run();
+      setTimeout(()=>{
+        if(!active||tok!==seq)return;
+        const el=s.target&&$(s.target);
+        if(el)el.scrollIntoView({block:innerWidth<=760?'start':'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+        render(s);
+        card.classList.remove('swap');
+        if(auto)arm();
+      },s.run?380:220);
+    },60);
+  }
+  function render(s){
+    const last=i===steps.length-1,first=i===0;
+    card.classList.toggle('center',!!s.center);
+    card.innerHTML=s.center
+      ?`<button class="tour-x" aria-label="End walkthrough">×</button><div class="tour-rule"></div><h2>${s.title}</h2><p class="tour-body">${s.body}</p>
+        <div class="tour-nav" style="margin-top:26px">${first
+          ?`<button class="btn btn-primary" data-a="next">Start walkthrough</button><button class="btn btn-quiet" data-a="end">Explore on my own</button><span class="spacer"></span><button class="btn btn-quiet btn-small" data-a="auto">Autoplay</button>`
+          :`<button class="btn btn-primary" data-a="end">Finish</button><button class="btn btn-quiet" data-a="restart">Watch again</button><span class="spacer"></span><button class="btn btn-quiet btn-small" data-a="back">Back</button>`}</div>
+        <p class="tour-keys">Use the arrow keys to move, space to autoplay, Esc to leave.</p>`
+      :`<button class="tour-x" aria-label="End walkthrough">×</button><p class="tour-step">Step ${i} of ${steps.length-2}</p><h2>${s.title}</h2><p class="tour-body">${s.body}</p>
+        <div class="tour-progress"><i id="tourBar"></i></div>
+        <div class="tour-nav"><button class="btn btn-quiet btn-small" data-a="back">Back</button><button class="btn btn-quiet btn-small" data-a="auto">${auto?'Pause':'Autoplay'}</button><span class="spacer"></span><button class="btn btn-primary btn-small" data-a="next">${i===steps.length-2?'Finish tour':'Next'}</button></div>`;
+    card.querySelector('.tour-x').onclick=end;
+    card.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({next,back,end,restart:()=>go(0),auto:toggleAuto}[b.dataset.a])());
+    const focus=card.querySelector('[data-a=next]')||card.querySelector('[data-a=end]');if(focus)focus.focus({preventScroll:true});
+  }
+  function place(){
+    const s=steps[i],vw=innerWidth,vh=innerHeight,W=card.offsetWidth,H=card.offsetHeight,g=16;
+    if(s.center){
+      spot.classList.add('full');Object.assign(spot.style,{left:vw/2+'px',top:vh/2+'px',width:'0px',height:'0px'});
+      card.style.left=(vw-W)/2+'px';card.style.top=Math.max(g,(vh-H)/2)+'px';return;
+    }
+    spot.classList.remove('full');
+    const el=$(s.target);if(!el)return;
+    const r=el.getBoundingClientRect(),p=8;
+    const floor=vw<=760?card.getBoundingClientRect().top-10:vh-6;
+    const t=Math.max(r.top-p,6),l=Math.max(r.left-p,6),b=Math.min(r.bottom+p,floor),rt=Math.min(r.right+p,vw-6);
+    Object.assign(spot.style,{left:l+'px',top:t+'px',width:Math.max(0,rt-l)+'px',height:Math.max(0,b-t)+'px'});
+    if(vw<=760)return;
+    const clampY=y=>Math.min(Math.max(g,y),vh-H-g),clampX=x=>Math.min(Math.max(g,x),vw-W-g);
+    let x,y;
+    if(rt+g+W<=vw-g){x=rt+g;y=clampY(t)}
+    else if(l-g-W>=g){x=l-g-W;y=clampY(t)}
+    else if(b+g+H<=vh-g){x=clampX(l);y=b+g}
+    else if(t-g-H>=g){x=clampX(l);y=t-g-H}
+    else{x=vw-W-g;y=vh-H-g}
+    card.style.left=x+'px';card.style.top=y+'px';
+  }
+  function loop(){if(!active)return;place();raf=requestAnimationFrame(loop)}
+  function arm(){
+    clearTimeout(timer);const bar=$('#tourBar');
+    if(bar){bar.style.transition='none';bar.style.width='0';void bar.offsetWidth;bar.style.transition=`width ${AUTO_MS}ms linear`;bar.style.width='100%'}
+    timer=setTimeout(()=>{if(active&&auto){if(i<steps.length-1)next();else stopAuto()}},AUTO_MS);
+  }
+  function stopAuto(){auto=false;clearTimeout(timer);const bar=$('#tourBar');if(bar){bar.style.transition='none';bar.style.width='0'}}
+  function toggleAuto(){
+    if(auto){stopAuto();render(steps[i]);return}
+    auto=true;
+    if(i===0)next();else{render(steps[i]);arm()}
+  }
+  function keys(e){
+    if(!active)return;
+    const tag=(e.target.tagName||'').toLowerCase();
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();end()}
+    else if(e.key==='ArrowRight'||(e.key==='Enter'&&tag!=='button')){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'){e.preventDefault();back()}
+    else if(e.key===' '&&tag!=='button'){e.preventDefault();toggleAuto()}
+    else if(e.key==='Tab'){const f=[...card.querySelectorAll('button')];if(!f.length)return;const k=f.indexOf(document.activeElement);e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus()}
+  }
+  return{start,end};
+})();
+if(/[?&]demo\b/.test(location.search))Tour.start();
 </script>
 </body>
 </html>
