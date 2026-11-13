@@ -183,7 +183,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 
 def cmd_housing(args: argparse.Namespace) -> int:
-    from .housing import build_snapshot, export_snapshot
+    from .housing import build_snapshot, export_snapshot, write_site_file
     counties = select_counties(args)
     if counties is None:
         return 2
@@ -192,6 +192,14 @@ def cmd_housing(args: argparse.Namespace) -> int:
     snap = build_snapshot(client, counties, Path(args.cache), args.months)
     suffix = "_" + "-".join(sorted(c["name"] for c in counties)).lower() if args.county else ""
     paths = export_snapshot(snap, Path(args.out), date.today(), suffix)
+    if args.site:
+        if args.county:
+            print("--site needs a full run; drop --county", file=sys.stderr)
+            return 2
+        if not snap["sources"]:
+            print("nothing downloaded; the hub's housing file was left as it was", file=sys.stderr)
+            return 1
+        paths["site"] = write_site_file(snap, Path(args.site))
     for s in snap["sources"]:
         print(f"  {s['label']:<24} through {s['data_through']}  "
               f"{s['counties_covered']:2d}/{len(counties)} counties")
@@ -261,6 +269,8 @@ def main(argv: list[str] | None = None) -> int:
     h.add_argument("--months", type=int, default=24, help="months of history kept in the JSON")
     h.add_argument("--contact", help="contact email for the user agent (or COUNTY_SCRAPER_CONTACT)")
     h.add_argument("--cache", default=str(ROOT / "data" / "zillow"))
+    h.add_argument("--site", nargs="?", const=str(ROOT.parent / "data" / "housing.js"),
+                   help="also refresh the hub's Housing page data (default ../data/housing.js)")
     h.add_argument("--out", default=str(ROOT / "out"))
     h.set_defaults(fn=cmd_housing)
 

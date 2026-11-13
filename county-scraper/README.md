@@ -153,11 +153,13 @@ extraction doesn't create duplicates. Known limits:
 ```bash
 .venv/bin/python -m scraper housing                   # all 30 counties
 .venv/bin/python -m scraper housing --county Greene --county Putnam
+.venv/bin/python -m scraper housing --site            # also refresh the hub's Housing market page
 ```
 
 Writes `out/housing_YYYY-MM-DD.md` (a one-page table per region for bankers), `.csv`
 (one row per county, Excel-friendly) and `.json` (the same plus 24 months of history
-per series, for charts in the hub).
+per series). With `--site` it also writes `../data/housing.js`, the file the hub's
+Housing market page loads; commit that file to publish the new month.
 
 The data comes from the county files Zillow Research publishes for download at
 [zillow.com/research/data](https://www.zillow.com/research/data/), matched to our
