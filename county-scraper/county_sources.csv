@@ -1,0 +1,31 @@
+region,county,site,platform,agendas_url,calendar_url,feed_or_hint,status_2026_11_13
+Middle GA (MGRC),Baldwin,https://www.baldwincountyga.com,CivicPlus,https://www.baldwincountyga.com/1209/Agendas-Minutes,https://www.baldwincountyga.com/calendar.aspx?CID=14,RSSFeed.aspx?ModID=58 (calendar),ok
+Middle GA (MGRC),Macon-Bibb,https://www.maconbibb.us,WordPress + CivicClerk agendas,(CivicClerk portal - linked from site),https://www.maconbibb.us/news/,/feed (RSS); also economic-community-development pages,ok
+Middle GA (MGRC),Crawford,https://www.crawfordcountyga.org,WordPress (Events Calendar),https://www.crawfordcountyga.org/agendas-and-minutes-2/,https://www.crawfordcountyga.org/events-2/,/events/?ical=1; dev authority crawforddevelopment.net,ok
+Middle GA (MGRC),Houston,https://www.houstoncountyga.gov,Custom CMS (.cms),https://www.houstoncountyga.gov/commissioner/meeting-minutes.cms,https://www.houstoncountyga.gov/commissioner/calendar.cms,/residents/news.cms has public hearing + site-suitability notices,ok - HTML scrape
+Middle GA (MGRC),Jones,https://www.jonescountyga.org,WordPress (Events Calendar),https://www.jonescountyga.org/agenda-and-minutes/,https://www.jonescountyga.org/calendar/,/feed (RSS); zoning hearings posted as events,ok
+Middle GA (MGRC),Monroe,https://www.monroecoga.org,WordPress (Events Calendar),https://www.monroecoga.org/agendas-minutes/,https://www.monroecoga.org/calendar/,/feed; chamber calendar forsythmonroechamber.chambermaster.com,ok
+Middle GA (MGRC),Peach,https://peachcounty.gov,WordPress (Events Calendar),https://peachcounty.gov/county-clerk-and-administrators-office/board-meetings/,https://peachcounty.gov/events/,/events/?ical=1 and /wp-json/tribe/events/v1/events (empty at check); dev authority peachcountydevelopment.com,ok - calendar sparse
+Middle GA (MGRC),Pulaski,https://hawkinsville-pulaski.org,WordPress (joint city-county),https://hawkinsville-pulaski.org/county-agenda-and-minutes2/,https://hawkinsville-pulaski.org/events-calendar-request/,/category/city-county-news/,ok
+Middle GA (MGRC),Putnam,https://www.putnamcountyga.us,CivicPlus,https://www.putnamcountyga.us/378/Meetings,https://www.putnamcountyga.us/calendar.aspx?CID=14,RSSFeed.aspx?ModID=58,ok
+Middle GA (MGRC),Twiggs,https://www.twiggscounty.us,WordPress,https://www.twiggscounty.us/agenda-minutes2/,https://www.twiggscounty.us/calendar/,/feed,ok
+Middle GA (MGRC),Wilkinson,https://www.wilkinsoncounty.net,WordPress,https://www.wilkinsoncounty.net/agendas-and-minutes/,https://www.wilkinsoncounty.net/upcoming-events/,/feed,ok
+East GA (CSRA),Augusta-Richmond,https://www.augustaga.gov,CivicPlus,(see Government-Meetings-Live / AgendaCenter),https://www.augustaga.gov/calendar.aspx,RSSFeed.aspx?ModID=58&CID=All-calendar.xml (verified working),ok
+East GA (CSRA),Columbia,https://www.columbiacountyga.gov,CivicPlus,(AgendaCenter),https://www.columbiacountyga.gov/calendar.aspx?CID=14,RSSFeed.aspx?ModID=58&CID=All-calendar.xml (verified working),ok
+East GA (CSRA),Burke,https://www.burkecounty-ga.gov,Revize,https://www.burkecounty-ga.gov/departments/board_of_commissioners/meetings_agendas_minutes.php,https://www.burkecounty-ga.gov/calendar.php,HTML scrape; comp plan under planning_department,ok
+East GA (CSRA),Glascock,https://glascockcountyga.com,Unknown,,,403 to automated requests; check local paper (The News and Farmer) / CSRA RC,blocked
+East GA (CSRA),Hancock,https://www.hancockcountyga.gov,Squarespace,https://www.hancockcountyga.gov/board-of-commissioners,,No agenda archive found on homepage; check BOC page manually,thin
+East GA (CSRA),Jefferson,https://www.jeffersoncountyga.gov,CivicPlus,https://www.jeffersoncountyga.gov/151,https://www.jeffersoncountyga.gov/calendar.aspx?CID=14,Agendas/packets in DocumentCenter; RSS available,ok
+East GA (CSRA),Jenkins,https://www.jenkinscountyga.com,Custom PHP,https://www.jenkinscountyga.com/jenkins-county-minutes-agendas.php,,HTML scrape (also city-of-millen-minutes-agendas.php),ok
+East GA (CSRA),Lincoln,https://lincolncountyga.com,Custom static,https://lincolncountyga.com/boc-meeting-agendas,,sitemap.xml lists pages; boc-meeting-minutes + boc-videos,ok - HTML scrape
+East GA (CSRA),McDuffie,https://www.thomson-mcduffie.gov,CivicPlus (joint city-county),(AgendaCenter),https://www.thomson-mcduffie.gov/Calendar.aspx,RSSFeed.aspx?ModID=58; old domain thomson-mcduffie.net fails TLS,ok
+East GA (CSRA),Taliaferro,https://taliaferrocountyga.org,WordPress,,https://taliaferrocountyga.org/events/,/development-authority/ page; /feed,ok - no agenda archive seen
+East GA (CSRA),Warren,https://www.warrencountyga.com,Weebly-style static,(PDF uploads under /uploads/),https://www.warrencountyga.com/calendar.html,development1.html + planning--zoning.html; depotdirect.org event calendar,ok - HTML scrape
+East GA (CSRA),Washington,https://www.washingtoncountyga.gov,CivicPlus,https://www.washingtoncountyga.gov/AgendaCenter,https://www.washingtoncountyga.gov/calendar.aspx?CID=14,RSSFeed.aspx?ModID=65 (agendas),ok
+East GA (CSRA),Wilkes,https://wilkescounty.net,CivicPlus,https://wilkescounty.net/agendacenter,https://wilkescounty.net/calendar.aspx?CID=14,RSSFeed.aspx?ModID=65; old domain wilkescountyga.org 403,ok
+BankSouth home,Greene,https://www.greenecountyga.gov,CivicPlus + CivicClerk,https://www.greenecountyga.gov/AgendaCenter,,/441/Economic-Development; /438/Meetings-Public-Hearings,ok
+BankSouth home,Oconee,https://www.oconeecountyga.gov,CivicPlus,https://www.oconeecountyga.gov/129/Agendas-Minutes,https://www.oconeecountyga.gov/calendar.aspx,RSSFeed.aspx?ModID=58,ok
+BankSouth home,Morgan,https://www.morgancountyga.gov,CivicPlus,https://www.morgancountyga.gov/AgendaCenter,https://www.morgancountyga.gov/calendar.aspx,RSSFeed.aspx?ModID=65&CID=All-0 (verified working),ok
+BankSouth home (Cochran),Bleckley,https://bleckley.org,WordPress,https://bleckley.org/meeting-agendas/,https://bleckley.org/events/,/feed,ok
+BankSouth home (Dublin/Dexter),Laurens,https://www.laurenscoga.org,CivicPlus,https://www.laurenscoga.org/agendacenter,https://www.laurenscoga.org/calendar.aspx,RSSFeed.aspx?ModID=65,ok
+BankSouth home (Wrightsville),Johnson,https://www.johnsonco.org,Unknown,https://www.johnsonco.org/commissioners/meeting/,,403 to automated requests; may need real browser (Playwright),blocked

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "banksouth-lead-finder/scraper_contract (derived from scraper_handoff.md)",
+  "description": "Rebuilt from the field tables in scraper_handoff.md because the original scraper_contract.schema.json was not available. Replace this file with the lead-finder team's version when you have it; `python -m scraper validate --schema <theirs>` uses any schema.",
+  "oneOf": [{"$ref": "#/$defs/scrape_run"}, {"$ref": "#/$defs/document"}],
+  "$defs": {
+    "county": {"type": "string", "minLength": 1, "not": {"pattern": "[Cc][Oo][Uu][Nn][Tt][Yy]|\\b[Cc][Oo]\\.?$"}},
+    "fips": {"type": "string", "pattern": "^13\\d{3}$"},
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?([+-]\\d{2}:\\d{2}|Z)$"
+    },
+    "uuid": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "scrape_run": {
+      "type": "object",
+      "required": ["record_type", "scrape_run_id", "county", "county_fips", "started_at", "status"],
+      "properties": {
+        "record_type": {"const": "scrape_run"},
+        "scrape_run_id": {"$ref": "#/$defs/uuid"},
+        "county": {"$ref": "#/$defs/county"},
+        "county_fips": {"$ref": "#/$defs/fips"},
+        "started_at": {"$ref": "#/$defs/timestamp"},
+        "finished_at": {"$ref": "#/$defs/timestamp"},
+        "status": {"enum": ["running", "succeeded", "partial", "failed"]},
+        "docs_found": {"type": "integer", "minimum": 0},
+        "docs_new": {"type": "integer", "minimum": 0},
+        "error_message": {"type": "string", "minLength": 1},
+        "scraper_version": {"type": "string"}
+      },
+      "additionalProperties": false,
+      "if": {"properties": {"status": {"enum": ["partial", "failed"]}}},
+      "then": {"required": ["error_message"]}
+    },
+    "document": {
+      "type": "object",
+      "required": ["record_type", "scrape_run_id", "county", "county_fips", "doc_type",
+                   "source_url", "retrieved_at", "content_hash", "file_type"],
+      "properties": {
+        "record_type": {"const": "document"},
+        "scrape_run_id": {"$ref": "#/$defs/uuid"},
+        "county": {"$ref": "#/$defs/county"},
+        "county_fips": {"$ref": "#/$defs/fips"},
+        "doc_type": {"enum": ["agenda", "agenda_packet", "minutes", "other"]},
+        "source_url": {"type": "string", "pattern": "^https?://"},
+        "retrieved_at": {"$ref": "#/$defs/timestamp"},
+        "content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "file_type": {"enum": ["pdf", "html", "docx", "txt", "other"]},
+        "raw_text": {"type": "string"},
+        "file_ref": {"type": "string", "minLength": 1},
+        "has_text_layer": {"type": "boolean"},
+        "meeting_body_raw": {"type": "string"},
+        "meeting_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+        "extra": {"type": "object"}
+      },
+      "additionalProperties": false,
+      "anyOf": [{"required": ["raw_text"]}, {"required": ["file_ref"]}]
+    }
+  }
+}
