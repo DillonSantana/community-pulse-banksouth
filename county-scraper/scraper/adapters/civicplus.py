@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urljoin
 
-from ..dates import find_date, parse_rfc822
+from ..dates import find_date, find_time, parse_rfc822
 from ..models import Item
 from .base import Context, clean, kind_from_title, rss_items, soup
 
@@ -60,6 +60,7 @@ def calendar_rss(ctx: Context, base: str) -> list[Item]:
             title=clean(it.get("title"), 300),
             url=it.get("link", ""),
             event_date=when,
+            event_time=find_time(it.get("EventTimes", ""), clean(it.get("description"))),
             posted_date=parse_rfc822(it.get("pubDate")),
             location=clean(it.get("Location"), 300),
             body=clean(it.get("description")),

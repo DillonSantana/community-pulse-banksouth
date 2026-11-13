@@ -3,13 +3,13 @@ AI powered search for community opportunities
 
 **BankSouth Opportunity Hub** — a clickable prototype that helps relationship bankers spot and act on commercial opportunities in their markets.
 
-> All data in this prototype is sample data for demonstration. This repository is public: do not commit real customer, deal, or banker information.
+> Opportunities, customers, leads and bankers in this prototype are sample data for demonstration. The events tagged **County posting** are real public meetings taken from county websites. This repository is public: do not commit real customer, deal, or banker information.
 
 ## What's in it
 
 - **Overview** — key stats, priority opportunities table (search and urgency filter), deadlines in the next 30 days, pipeline by market, and team activity. Click a row to open the opportunity detail drawer.
 - **Public contract signals** — public-source project and contract records, each with its source and verification date, kept separate from banker-owned opportunities.
-- **Where to Be** — events where future clients and project decision-makers are likely to gather, with filters, a relevance score and its breakdown, connected leads, banker coverage, and list / calendar / map views.
+- **Where to Be** — events where future clients and project decision-makers are likely to gather, with filters, a relevance score and its breakdown, connected leads, banker coverage, and list / calendar / map views. The calendar has a **Month** grid and an at-a-glance **List**, a compact day-by-day table showing time, meeting, county, agenda highlights and relevance. Real upcoming county meetings from `county-scraper` (`data/county-events.js`) appear alongside the sample events, tagged **County posting**.
 - **Campaign briefs** — a guided outreach brief that separates verified facts from hypotheses.
 
 ## Run it locally

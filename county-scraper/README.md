@@ -52,7 +52,7 @@ Each county in `sources.json` lists one or more **adapters**:
 
 | Adapter | Counties | Source |
 |---|---|---|
-| `civicplus` | Putnam, Washington, McDuffie, Wilkes, Morgan, Laurens (+ calendar/news for Baldwin, Augusta, Columbia, Jefferson, Greene, Oconee) | AgendaCenter page, Calendar RSS, News Flash RSS |
+| `civicplus` | Putnam, Washington, McDuffie, Morgan, Laurens (+ calendar/news for Baldwin, Augusta, Columbia, Jefferson, Greene, Oconee) | AgendaCenter page, Calendar RSS, News Flash RSS |
 | `civicclerk` | Macon-Bibb, Columbia, Greene, Oconee | Public CivicClerk API (events + agenda PDFs) |
 | `wordpress` | Macon-Bibb, Crawford, Jones, Monroe, Peach, Pulaski, Twiggs, Wilkinson, Taliaferro, Bleckley | WP REST API (posts + uploaded PDFs), JSON-LD events, Tribe iCal |
 | `municode` | Augusta-Richmond, Baldwin | Municode Meetings tables (currently blocked, see below) |
@@ -73,6 +73,35 @@ Then every item is **tagged and scored** (`scraper/tagging.py`):
 To tune what counts as interesting, edit the `TERMS`, `BONUS` and `NOISE` lists in
 `tagging.py`. To add a county, add an entry to `sources.json`. Most Georgia county
 sites are CivicPlus or WordPress, so usually only a base URL is needed.
+
+## Hub calendar feed (`../data/county-events.js`)
+
+Every full `run` also refreshes the Opportunity Hub's **Where to be** page (`../index.html`).
+It writes upcoming public meetings to `data/county-events.js` at the repo root, as
+`window.COUNTY_EVENTS = [...]`. The page loads that file with a `<script>` tag, so it
+also works when `index.html` is opened straight from disk.
+
+Which meetings go to the calendar (`scraper/hub_export.py`):
+
+- Dated today or later.
+- Not cancelled, and not routine noise or an unrelated board (library, elections,
+  recreation programs...).
+- Calendar entries must look like a meeting, hearing, forum or project milestone.
+- The same meeting reported by two feeds (say, a calendar entry and an agenda PDF) is
+  merged. The merged entry keeps the time, venue, agenda link and agenda highlights.
+
+Each event carries:
+
+- the time, a cleaned venue, and the county seat for the map and distance filters
+- the agenda highlights pulled from its PDF
+- links to the county posting and the agenda document
+- `origin: "county"`, which the hub shows as **County posting**
+
+Relevance uses the hub's own score parts: connected leads stay 0 until the Lead
+Finder supplies them, and agenda content sets the "developer attendance" part.
+
+A `--county` run doesn't touch the calendar file, since it would drop every other
+county. Pass `--hub-out` to write it anyway, or `--no-hub` to skip it on a full run.
 
 ## Lead Finder handoff (`scrape_*.jsonl`)
 
@@ -165,6 +194,7 @@ extraction doesn't create duplicates. Known limits:
 | Augusta-Richmond, Baldwin (Municode Meetings) | Portal drops non-browser clients | Their CivicPlus calendar and news still come through. For agendas, ask Municode or the county clerk about a feed, or check `augustarichmond-ga.municodemeetings.com` by hand |
 | Lincoln | `robots.txt` disallows all crawlers | Check `lincolncountyga.com/boc-meeting-agendas` by hand, or ask the county for permission |
 | Glascock, Johnson | Sites return HTTP 403 to automated requests | Check by hand. The CSRA Regional Commission and local papers are fallbacks |
+| Wilkes | `wilkescountyga.org` sits behind a Cloudflare bot challenge. (`wilkescounty.net` is Wilkes County, **North Carolina**, so don't use it.) | The Washington-Wilkes Chamber calendar lists commission meetings |
 | Hancock, Taliaferro | Little posted online | Low volume; the scraper catches what exists |
 
 Facebook, X and Eventbrite are intentionally out of scope.

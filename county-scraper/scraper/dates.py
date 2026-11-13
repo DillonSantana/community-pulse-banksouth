@@ -80,3 +80,31 @@ def parse_rfc822(value: str | None) -> Optional[date]:
         return parsedate_to_datetime(value).date()
     except (TypeError, ValueError):
         return find_date(value)
+
+
+_TIME_12 = re.compile(r"\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*([ap])\.?\s*m\.?(?![a-z])", re.I)
+_TIME_ISO = re.compile(r"T([01]\d|2[0-3]):?([0-5]\d)")
+
+
+def _fmt(h: int, m: int) -> str:
+    return f"{(h % 12) or 12}:{m:02d} {'AM' if h < 12 else 'PM'}"
+
+
+def find_time(*texts: str) -> str:
+    """First clock time in the strings, as '6:00 PM'; '' if none.
+
+    ISO timestamps are read as the county's wall-clock time: CivicClerk labels local
+    meeting times with 'Z' (a 5 PM meeting comes through as T17:00:00Z).
+    Midnight ('T00:00') usually means "no time given", so it is ignored.
+    """
+    for text in texts:
+        if not text:
+            continue
+        m = _TIME_12.search(text)
+        if m:
+            h = int(m.group(1)) % 12 + (12 if m.group(3).lower() == "p" else 0)
+            return _fmt(h, int(m.group(2) or 0))
+        m = _TIME_ISO.search(text)
+        if m and (m.group(1), m.group(2)) != ("00", "00"):
+            return _fmt(int(m.group(1)), int(m.group(2)))
+    return ""

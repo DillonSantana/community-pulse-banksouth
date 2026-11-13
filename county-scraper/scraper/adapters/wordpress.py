@@ -14,7 +14,7 @@ import re
 from datetime import datetime
 from urllib.parse import urljoin
 
-from ..dates import find_date, parse_iso
+from ..dates import find_date, find_time, parse_iso
 from ..models import Item
 from .base import Context, clean, kind_from_title, soup
 
@@ -106,7 +106,7 @@ def events_pages(ctx: Context, pages: list[str]) -> list[Item]:
             location = clean(f"{loc.get('name', '') if isinstance(loc, dict) else ''} {addr or ''}", 300)
             out.append(ctx.item(
                 kind="event", title=clean(ev.get("name"), 300), url=url,
-                event_date=when, location=location,
+                event_date=when, event_time=find_time(ev.get("startDate") or ""), location=location,
                 body=clean(ev.get("description")), source="wordpress.events",
             ))
     return out
@@ -137,7 +137,7 @@ def ical(ctx: Context, url: str) -> list[Item]:
                 desc = cur.get("DESCRIPTION", "").replace("\\n", " ").replace("\\,", ",")
                 out.append(ctx.item(
                     kind="event", title=clean(cur.get("SUMMARY", "").replace("\\,", ","), 300),
-                    url=cur.get("URL", url), event_date=when,
+                    url=cur.get("URL", url), event_date=when, event_time=find_time(raw),
                     location=clean(cur.get("LOCATION", "").replace("\\,", ","), 300),
                     body=clean(desc), source="wordpress.ical",
                 ))
