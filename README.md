@@ -21,3 +21,15 @@ python3 -m http.server 8080
 ```
 
 Then open http://localhost:8080.
+
+## County scraper (`county-scraper/`)
+
+A Python scraper that reads public commission and planning postings from 30 Middle Georgia,
+East Georgia and BankSouth home-county websites. It produces:
+
+- a ranked digest of development and community-forum items
+- the `scrape_run` / `document` JSONL the Lead Finder schema expects
+- structured agenda items: request type, parcels, acreage, zoning change, and parties with roles
+
+See [county-scraper/README.md](county-scraper/README.md). Everything it collects is
+public county records; scraped data and downloaded files stay out of git.
