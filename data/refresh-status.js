@@ -1,2 +1,2 @@
 // Written by the daily refresh job. Do not edit by hand.
-window.DATA_REFRESH = {"checked_at": "2026-11-25T19:58:02Z", "run": "https://github.com/DillonSantana/community-pulse-banksouth/actions/runs/45690005322"};
+window.DATA_REFRESH = {"checked_at": "2026-11-26T19:46:09Z", "run": "https://github.com/DillonSantana/community-pulse-banksouth/actions/runs/45884945055"};
